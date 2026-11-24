@@ -4,6 +4,8 @@ import { canvasToBlob } from '@/capture/snapshot';
 import { captureStill } from '@/capture/stillCapture';
 import { createThumbnail } from '@/capture/thumbnails';
 import { recordTurntable } from '@/capture/turntable';
+import { requestBuild } from '@/engine/buildClient';
+import { toGeometry } from '@/engine/geometry';
 import { downloadBlob, exportSpecimenGlb, specimenFileName } from '@/engine/glbExporter';
 import { studio } from '@/scene/studioBridge';
 import { useBotanyStore } from '@/store/useBotanyStore';
@@ -11,6 +13,8 @@ import { useHerbariumStore } from '@/store/useHerbariumStore';
 import { buildShareUrl } from './shareLink';
 
 const TURNTABLE_SECONDS = 8;
+const LOD_DETAILS = [0.5, 0.25] as const;
+const USDZ_DETAIL = 0.5;
 
 export interface StudioAction {
   id: string;
@@ -42,10 +46,44 @@ export function requireSpecimen() {
 
 export function exportGlb(): Promise<void> {
   return runActivity('Exporting glTF', 'Binary glTF exported', async () => {
-    const { bark, foliage } = requireSpecimen();
     const { species } = useBotanyStore.getState();
-    const buffer = await exportSpecimenGlb({ species, bark, foliage });
+    const buffer = await exportSpecimenGlb({ species, levels: [requireSpecimen()] });
     downloadBlob(new Blob([buffer], { type: 'model/gltf-binary' }), specimenFileName(species, 'glb'));
+  });
+}
+
+export function exportGlbWithLods(): Promise<void> {
+  return runActivity('Building detail levels', 'glTF with detail levels exported', async () => {
+    const { species } = useBotanyStore.getState();
+    const reduced = await Promise.all(LOD_DETAILS.map((detail) => requestBuild({ grammar: species.grammar, form: species.form, seed: species.seed, detail })));
+    const levels = reduced.map((data) => ({ bark: toGeometry(data.bark), foliage: toGeometry(data.foliage) }));
+    try {
+      const buffer = await exportSpecimenGlb({ species, levels: [requireSpecimen(), ...levels] });
+      downloadBlob(new Blob([buffer], { type: 'model/gltf-binary' }), specimenFileName(species, 'lods.glb'));
+    } finally {
+      levels.forEach((level) => {
+        level.bark.dispose();
+        level.foliage.dispose();
+      });
+    }
+  });
+}
+
+export function exportUsdz(): Promise<void> {
+  return runActivity('Exporting USDZ', 'USDZ exported', async () => {
+    const { species } = useBotanyStore.getState();
+    const [{ exportSpecimenUsdz }, data] = await Promise.all([
+      import('@/engine/usdzExporter'),
+      requestBuild({ grammar: species.grammar, form: species.form, seed: species.seed, detail: USDZ_DETAIL }),
+    ]);
+    const level = { bark: toGeometry(data.bark), foliage: toGeometry(data.foliage) };
+    try {
+      const buffer = await exportSpecimenUsdz({ species, levels: [level] });
+      downloadBlob(new Blob([buffer], { type: 'model/vnd.usdz+zip' }), specimenFileName(species, 'usdz'));
+    } finally {
+      level.bark.dispose();
+      level.foliage.dispose();
+    }
   });
 }
 
@@ -101,7 +139,9 @@ export async function saveToHerbarium(): Promise<void> {
 }
 
 export const EXPORT_ACTIONS: readonly StudioAction[] = [
-  { id: 'glb', label: 'Binary glTF', hint: 'Mesh with vertex colours for Blender or Unity', run: exportGlb },
+  { id: 'glb', label: 'Binary glTF', hint: 'Mesh, vertex colours and wind weights', run: exportGlb },
+  { id: 'glb-lods', label: 'glTF with detail levels', hint: 'LOD0 to LOD2 named for engine import', run: exportGlbWithLods },
+  { id: 'usdz', label: 'USDZ for augmented reality', hint: 'Lighter mesh for Quick Look on iPhone and iPad', run: exportUsdz },
   { id: 'still', label: 'Transparent PNG', hint: 'High resolution still of the current view', run: exportStill },
   { id: 'turntable', label: 'Turntable video', hint: 'Eight second full rotation', run: exportTurntable },
   { id: 'plate', label: 'Botanical plate', hint: 'Poster with portrait, grammar and palette', run: exportPlate },
