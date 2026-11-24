@@ -1,7 +1,7 @@
 'use client';
 
 import { useBotanyStore } from '@/store/useBotanyStore';
-import { SPECIES_PRESETS } from '@/types/botany';
+import { SPECIES_PRESETS } from '@/types/presets';
 
 export function SpecimenPlacard() {
   const name = useBotanyStore((state) => state.species.name);

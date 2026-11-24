@@ -24,6 +24,7 @@ const MOOD_WORDS: readonly (readonly [LightingMood, readonly string[]])[] = [
   ['abyssal', ['glow', 'glowing', 'bioluminescent', 'neon', 'abyss', 'deep sea', 'alien', 'luminous', 'radioactive']],
   ['moonlit', ['moon', 'night', 'lunar', 'midnight', 'frost', 'ghost', 'winter', 'ice']],
   ['goldenHour', ['sunset', 'golden', 'autumn', 'dusk', 'savanna', 'ember', 'sun']],
+  ['dawn', ['dawn', 'sunrise', 'morning', 'spring', 'pastel', 'mist']],
 ];
 
 const GLOW_WORDS = ['glow', 'glowing', 'bioluminescent', 'neon', 'luminous', 'radioactive', 'ember', 'fire', 'crystal', 'electric'];
@@ -52,6 +53,7 @@ function tintPalette(palette: Palette, tint: Tint, glow: number): Palette {
     leafDeep: hslToHex(tint.hue, tint.saturation * 0.85, 0.26),
     leafBright: hslToHex(tint.hue + 8, tint.saturation, 0.62),
     subsurface: hslToHex(tint.hue + 22, Math.min(1, tint.saturation + 0.2), 0.66),
+    organ: hslToHex(tint.hue - 12, Math.min(1, tint.saturation + 0.1), 0.78),
     glow,
   };
 }

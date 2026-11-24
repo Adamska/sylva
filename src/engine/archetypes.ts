@@ -1,4 +1,5 @@
-import { SPECIES_PRESETS, type Species } from '@/types/botany';
+import type { Species } from '@/types/botany';
+import { SPECIES_PRESETS } from '@/types/presets';
 
 export interface Archetype {
   genus: string;
@@ -6,14 +7,15 @@ export interface Archetype {
   template: Omit<Species, 'name' | 'latin' | 'seed'>;
 }
 
-const [willow, pine, agave, coral] = SPECIES_PRESETS.map((preset) => preset.species);
+const [willow, pine, agave, coral, cherry] = SPECIES_PRESETS.map((preset) => preset.species);
 const fromPreset = ({ grammar, form, palette, mood }: Species): Archetype['template'] => ({ grammar, form, palette, mood });
 
-const leafGreens = { leafDeep: '#2c5a26', leafBright: '#93c552', subsurface: '#dfe45a', glow: 0 };
+const leafGreens = { leafDeep: '#2c5a26', leafBright: '#93c552', subsurface: '#dfe45a', organ: '#f3d2dc', glow: 0 };
+const organs = { organShape: 'blossom', organSize: 0.12 } as const;
 
 export const DEFAULT_ARCHETYPE: Archetype = {
   genus: 'Quercus',
-  keywords: ['oak', 'maple', 'beech', 'elm', 'birch', 'ash', 'tree', 'broadleaf', 'deciduous', 'cherry', 'apple', 'sakura', 'baobab'],
+  keywords: ['oak', 'maple', 'beech', 'elm', 'birch', 'ash', 'tree', 'broadleaf', 'deciduous', 'baobab'],
   template: {
     grammar: {
       axiom: 'F(1.9)/(30)F(1.2)A',
@@ -27,13 +29,14 @@ export const DEFAULT_ARCHETYPE: Archetype = {
       radiusScale: 0.68,
       tropismGravity: -0.06,
     },
-    form: { trunkRadius: 0.2, lengthDecay: 0.84, angleJitter: 0.3, leafShape: 'ovate', leafSize: 0.24 },
+    form: { trunkRadius: 0.2, lengthDecay: 0.84, angleJitter: 0.3, leafShape: 'ovate', leafSize: 0.24, ...organs },
     palette: { barkDark: '#231b15', barkLight: '#77634c', ...leafGreens },
     mood: 'goldenHour',
   },
 };
 
 export const ARCHETYPES: readonly Archetype[] = [
+  { genus: 'Prunus', keywords: ['cherry', 'sakura', 'blossom', 'plum', 'apple', 'magnolia', 'almond', 'flowering', 'flower', 'orchard'], template: fromPreset(cherry) },
   { genus: 'Salix', keywords: ['willow', 'weeping', 'drooping', 'cascade', 'cascading', 'wisteria', 'pendulous'], template: fromPreset(willow) },
   { genus: 'Pinus', keywords: ['pine', 'fir', 'spruce', 'cedar', 'juniper', 'cypress', 'yew', 'conifer', 'larch', 'redwood', 'sequoia', 'christmas', 'evergreen'], template: fromPreset(pine) },
   { genus: 'Agave', keywords: ['agave', 'aloe', 'succulent', 'yucca', 'rosette', 'bromeliad', 'pineapple', 'cactus', 'desert'], template: fromPreset(agave) },
@@ -51,7 +54,7 @@ export const ARCHETYPES: readonly Archetype[] = [
         radiusScale: 0.72,
         tropismGravity: 0.08,
       },
-      form: { trunkRadius: 0.07, lengthDecay: 0.9, angleJitter: 0.34, leafShape: 'ovate', leafSize: 0.2 },
+      form: { trunkRadius: 0.07, lengthDecay: 0.9, angleJitter: 0.34, leafShape: 'ovate', leafSize: 0.2, ...organs },
       palette: { barkDark: '#2b2118', barkLight: '#6f5a41', ...leafGreens },
       mood: 'studio',
     },
@@ -72,8 +75,8 @@ export const ARCHETYPES: readonly Archetype[] = [
         radiusScale: 0.7,
         tropismGravity: 0.3,
       },
-      form: { trunkRadius: 0.03, lengthDecay: 0.72, angleJitter: 0.12, leafShape: 'lanceolate', leafSize: 0.17 },
-      palette: { barkDark: '#24301a', barkLight: '#5d7a35', leafDeep: '#1f4d24', leafBright: '#7fc24a', subsurface: '#d6ee58', glow: 0 },
+      form: { trunkRadius: 0.03, lengthDecay: 0.72, angleJitter: 0.12, leafShape: 'lanceolate', leafSize: 0.17, ...organs },
+      palette: { barkDark: '#24301a', barkLight: '#5d7a35', leafDeep: '#1f4d24', leafBright: '#7fc24a', subsurface: '#d6ee58', organ: '#e9dfa0', glow: 0 },
       mood: 'studio',
     },
   },
@@ -93,8 +96,8 @@ export const ARCHETYPES: readonly Archetype[] = [
         radiusScale: 0.6,
         tropismGravity: 0.85,
       },
-      form: { trunkRadius: 0.13, lengthDecay: 0.5, angleJitter: 0.1, leafShape: 'lanceolate', leafSize: 0.46 },
-      palette: { barkDark: '#2e2419', barkLight: '#8c7654', leafDeep: '#1f5a2c', leafBright: '#8fcf55', subsurface: '#e8ea5c', glow: 0 },
+      form: { trunkRadius: 0.13, lengthDecay: 0.5, angleJitter: 0.1, leafShape: 'lanceolate', leafSize: 0.46, ...organs },
+      palette: { barkDark: '#2e2419', barkLight: '#8c7654', leafDeep: '#1f5a2c', leafBright: '#8fcf55', subsurface: '#e8ea5c', organ: '#d9a441', glow: 0 },
       mood: 'goldenHour',
     },
   },
@@ -114,8 +117,8 @@ export const ARCHETYPES: readonly Archetype[] = [
         radiusScale: 0.9,
         tropismGravity: 0.16,
       },
-      form: { trunkRadius: 0.045, lengthDecay: 0.92, angleJitter: 0.16, leafShape: 'lanceolate', leafSize: 0.26 },
-      palette: { barkDark: '#3c4a1c', barkLight: '#a6b44c', leafDeep: '#2d5f25', leafBright: '#a4d25a', subsurface: '#eef06a', glow: 0 },
+      form: { trunkRadius: 0.045, lengthDecay: 0.92, angleJitter: 0.16, leafShape: 'lanceolate', leafSize: 0.26, ...organs },
+      palette: { barkDark: '#3c4a1c', barkLight: '#a6b44c', leafDeep: '#2d5f25', leafBright: '#a4d25a', subsurface: '#eef06a', organ: '#e9dfa0', glow: 0 },
       mood: 'studio',
     },
   },

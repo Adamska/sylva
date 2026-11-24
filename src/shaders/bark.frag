@@ -10,6 +10,7 @@ varying vec3 vWorldNormal;
 varying vec2 vUv;
 varying float vBranchFactor;
 varying float vBarkRoughness;
+varying float vRule;
 
 const float TAU = 6.28318530718;
 
@@ -80,14 +81,15 @@ void main() {
   float cavity = mix(1.0, mix(0.45, 1.0, smoothstep(0.1, 0.7, height)), age);
   float grounding = mix(0.55, 1.0, smoothstep(0.0, 0.6, vWorldPosition.y));
 
+  float sun = getShadowMask();
   vec3 light = hemisphereLight(normal);
-  light += uKeyColor * wrappedDiffuse(normal, uKeyDirection, 0.2);
+  light += uKeyColor * wrappedDiffuse(normal, uKeyDirection, 0.2) * sun;
   light += uBackColor * wrappedDiffuse(normal, uBackDirection, 0.1);
   vec3 color = albedo * light * cavity * grounding;
 
   vec3 halfVector = normalize(uKeyDirection + viewDirection);
   float sheen = pow(max(dot(normal, halfVector), 0.0), 28.0) * mix(0.22, 0.06, age);
-  color += uKeyColor * sheen * cavity * DIFFUSE_SCALE;
+  color += uKeyColor * sheen * cavity * DIFFUSE_SCALE * sun;
 
   float rim = fresnelTerm(normal, viewDirection, 3.0);
   float backFacing = wrappedDiffuse(geometricNormal, uBackDirection, 0.6) / DIFFUSE_SCALE;
@@ -98,7 +100,7 @@ void main() {
   float sap = sapVeins * (0.5 + 2.4 * sapPulse) + rim * 0.6;
   color += uGlowColor * uGlow * sap * mix(0.35, 1.0, vBranchFactor);
 
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(highlightRule(color, vRule), 1.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }

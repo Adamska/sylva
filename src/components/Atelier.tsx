@@ -1,11 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useBotanyStore } from '@/store/useBotanyStore';
+import { readSharedSpecies } from '@/studio/shareLink';
 import { FrameReadout } from './FrameReadout';
 import { GrammarControls } from './GrammarControls';
 import { SpeciesPromptBar } from './SpeciesPromptBar';
 import { SpecimenPlacard } from './SpecimenPlacard';
+import { StatusToast } from './StatusToast';
 
 const SpecimenCanvas = dynamic(() => import('@/scene/SpecimenCanvas'), {
   ssr: false,
@@ -19,11 +22,17 @@ const SpecimenCanvas = dynamic(() => import('@/scene/SpecimenCanvas'), {
 export function Atelier() {
   const [inspectorOpen, setInspectorOpen] = useState(false);
 
+  useEffect(() => {
+    const shared = readSharedSpecies(window.location.hash);
+    if (shared) useBotanyStore.getState().adoptSpecies(shared);
+  }, []);
+
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-obsidian">
       <div className="absolute inset-0">
         <SpecimenCanvas />
       </div>
+      <StatusToast />
 
       <div className="pointer-events-none absolute inset-0 flex gap-4 p-4 lg:p-6">
         <div className="flex min-w-0 flex-1 flex-col justify-between">
@@ -37,7 +46,7 @@ export function Atelier() {
         </div>
 
         <div className={`${inspectorOpen ? 'flex' : 'hidden'} absolute inset-y-4 right-4 max-h-[calc(100%-5rem)] lg:static lg:flex lg:max-h-full`}>
-          <GrammarControls />
+          <GrammarControls onEvolve={() => undefined} />
         </div>
       </div>
 

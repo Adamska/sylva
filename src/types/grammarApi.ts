@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LEAF_SHAPES, LIGHTING_MOODS, type Species } from './botany';
+import { LEAF_SHAPES, LIGHTING_MOODS, ORGAN_SHAPES, type Species } from './botany';
 
 export const PROMPT_MAX_LENGTH = 240;
 
@@ -30,6 +30,8 @@ export const speciesDraftSchema = z.object({
     angleJitter: z.number().describe('Random angular variation, 0 to 0.6'),
     leafShape: z.enum(LEAF_SHAPES),
     leafSize: z.number().describe('Leaf length, 0.03 to 2.4'),
+    organShape: z.enum(ORGAN_SHAPES).describe('Shape drawn by the K symbol'),
+    organSize: z.number().describe('Flower or fruit size, 0.02 to 0.6'),
   }),
   palette: z.object({
     barkDark: z.string().describe('Hex colour such as #2a2019'),
@@ -37,6 +39,7 @@ export const speciesDraftSchema = z.object({
     leafDeep: z.string(),
     leafBright: z.string(),
     subsurface: z.string().describe('Colour of light transmitted through the leaves'),
+    organ: z.string().describe('Colour of flowers or fruit'),
     glow: z.number().describe('Bioluminescent emission, 0 for ordinary plants up to 1'),
   }),
   mood: z.enum(LIGHTING_MOODS),

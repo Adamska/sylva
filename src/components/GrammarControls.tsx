@@ -1,57 +1,52 @@
 'use client';
 
 import { useBotanyStore } from '@/store/useBotanyStore';
-import { LEAF_SHAPES, PARAMETER_RANGES, SPECIES_PRESETS, type LeafShape } from '@/types/botany';
+import { copyShareLink } from '@/studio/actions';
+import { LEAF_SHAPES, ORGAN_SHAPES, PARAMETER_RANGES, type LeafShape, type OrganShape } from '@/types/botany';
 import { AtmosphereControls } from './AtmosphereControls';
+import { ExportMenu } from './ExportMenu';
+import { HerbariumShelf } from './HerbariumShelf';
 import { RuleEditor } from './RuleEditor';
 import { RangeField } from './ui/RangeField';
 import { Section } from './ui/Section';
 import { Segmented } from './ui/Segmented';
 
 const LEAF_LABELS: Record<LeafShape, string> = { lanceolate: 'Lance', needle: 'Needle', sword: 'Sword', ovate: 'Ovate', polyp: 'Polyp' };
+const ORGAN_LABELS: Record<OrganShape, string> = { blossom: 'Blossom', berry: 'Berry' };
 const leafOptions = LEAF_SHAPES.map((shape) => ({ value: shape, label: LEAF_LABELS[shape] }));
+const organOptions = ORGAN_SHAPES.map((shape) => ({ value: shape, label: ORGAN_LABELS[shape] }));
 
-const actionClass =
+const quietAction = 'text-[10px] uppercase tracking-[0.14em] text-bone/75 transition-colors hover:text-brass disabled:text-bone/25';
+const footerAction =
   'rounded-md border border-hairline px-2.5 py-1.5 text-[10px] uppercase tracking-[0.14em] text-bone/85 transition-colors hover:border-brass/50 hover:text-brass';
 
-const EXPORT_LABELS = { idle: 'Export .glb', working: 'Exporting', done: 'Exported', error: 'Export failed' } as const;
-
-export function GrammarControls() {
+export function GrammarControls({ onEvolve }: { onEvolve: () => void }) {
   const grammar = useBotanyStore((state) => state.species.grammar);
   const form = useBotanyStore((state) => state.species.form);
-  const presetId = useBotanyStore((state) => state.presetId);
-  const autoRotate = useBotanyStore((state) => state.autoRotate);
-  const exportStatus = useBotanyStore((state) => state.exportStatus);
-  const selectPreset = useBotanyStore((state) => state.selectPreset);
+  const canUndo = useBotanyStore((state) => state.past.length > 0);
+  const canRedo = useBotanyStore((state) => state.future.length > 0);
   const setGrammar = useBotanyStore((state) => state.setGrammar);
   const setForm = useBotanyStore((state) => state.setForm);
   const reseed = useBotanyStore((state) => state.reseed);
-  const toggleAutoRotate = useBotanyStore((state) => state.toggleAutoRotate);
-  const requestExport = useBotanyStore((state) => state.requestExport);
+  const undo = useBotanyStore((state) => state.undo);
+  const redo = useBotanyStore((state) => state.redo);
 
   return (
-    <aside className="pointer-events-auto flex max-h-full w-[19.5rem] flex-col overflow-hidden rounded-2xl border border-hairline bg-[#0b0c0f]/55 shadow-[0_32px_90px_-36px_rgba(0,0,0,0.95)] backdrop-blur-md">
-      <header className="flex flex-col gap-2.5 px-4 pb-3.5 pt-4">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[10px] font-medium uppercase tracking-[0.18em] text-bone/80">Herbarium</h2>
-          <span className="font-mono text-[10px] tabular-nums text-lichen">{SPECIES_PRESETS.length} species</span>
+    <aside className="pointer-events-auto flex max-h-full w-full flex-col overflow-hidden rounded-2xl border border-hairline bg-[#0b0c0f]/55 shadow-[0_32px_90px_-36px_rgba(0,0,0,0.95)] backdrop-blur-md lg:w-[19.5rem]">
+      <header className="flex flex-col gap-3 px-4 pb-3 pt-3.5">
+        <div className="flex items-center gap-3">
+          <h2 className="mr-auto text-[10px] font-medium uppercase tracking-[0.18em] text-bone/80">Herbarium</h2>
+          <button type="button" onClick={undo} disabled={!canUndo} className={quietAction}>
+            Undo
+          </button>
+          <button type="button" onClick={redo} disabled={!canRedo} className={quietAction}>
+            Redo
+          </button>
+          <button type="button" onClick={() => void copyShareLink()} className={quietAction}>
+            Link
+          </button>
         </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {SPECIES_PRESETS.map((preset, index) => (
-            <button
-              key={preset.id}
-              type="button"
-              aria-pressed={preset.id === presetId}
-              onClick={() => selectPreset(preset.id)}
-              className={`flex flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-left transition-colors ${
-                preset.id === presetId ? 'border-brass/60 bg-brass/10' : 'border-hairline hover:border-white/25'
-              }`}
-            >
-              <span className="font-mono text-[9px] tabular-nums text-lichen">No. {String(index + 1).padStart(2, '0')}</span>
-              <span className="truncate text-[11px] leading-tight text-bone">{preset.species.name}</span>
-            </button>
-          ))}
-        </div>
+        <HerbariumShelf />
       </header>
 
       <div className="sylva-scroll min-h-0 flex-1 overflow-y-auto">
@@ -73,28 +68,23 @@ export function GrammarControls() {
           <RangeField label="Trunk radius" value={form.trunkRadius} range={PARAMETER_RANGES.trunkRadius} onChange={(trunkRadius) => setForm({ trunkRadius })} />
           <RangeField label="Length decay" value={form.lengthDecay} range={PARAMETER_RANGES.lengthDecay} onChange={(lengthDecay) => setForm({ lengthDecay })} />
           <RangeField label="Angular jitter" value={form.angleJitter} range={PARAMETER_RANGES.angleJitter} onChange={(angleJitter) => setForm({ angleJitter })} />
-          <RangeField label="Leaf size" value={form.leafSize} range={PARAMETER_RANGES.leafSize} onChange={(leafSize) => setForm({ leafSize })} />
           <Segmented label="Leaf shape" value={form.leafShape} options={leafOptions} onChange={(leafShape) => setForm({ leafShape })} />
+          <RangeField label="Leaf size" value={form.leafSize} range={PARAMETER_RANGES.leafSize} onChange={(leafSize) => setForm({ leafSize })} />
+          <Segmented label="Flower or fruit (K)" value={form.organShape} options={organOptions} onChange={(organShape) => setForm({ organShape })} />
+          <RangeField label="Flower or fruit size" value={form.organSize} range={PARAMETER_RANGES.organSize} onChange={(organSize) => setForm({ organSize })} />
         </Section>
 
         <AtmosphereControls />
       </div>
 
       <footer className="flex items-center gap-1.5 border-t border-hairline px-4 py-3">
-        <button type="button" onClick={reseed} className={actionClass}>
+        <button type="button" onClick={reseed} className={footerAction}>
           Reseed
         </button>
-        <button type="button" onClick={toggleAutoRotate} aria-pressed={autoRotate} className={`${actionClass} ${autoRotate ? 'border-brass/40 text-brass' : ''}`}>
-          Orbit
+        <button type="button" onClick={onEvolve} className={footerAction}>
+          Evolve
         </button>
-        <button
-          type="button"
-          onClick={requestExport}
-          disabled={exportStatus === 'working'}
-          className="ml-auto rounded-md bg-brass px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-obsidian transition-opacity hover:opacity-90 disabled:opacity-60"
-        >
-          {EXPORT_LABELS[exportStatus]}
-        </button>
+        <ExportMenu />
       </footer>
     </aside>
   );

@@ -15,6 +15,7 @@ const MODULE_PATTERN = /[A-Za-z+\-&^\\/|[\]!](?:\(\d{1,4}(?:\.\d{1,3})?\))?/g;
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 const SEGMENT_BUDGET = 9_000;
 const LEAF_BUDGET = 7_000;
+const ORGAN_BUDGET = 4_000;
 
 const FALLBACK_PALETTE: Palette = {
   barkDark: '#2a2019',
@@ -22,6 +23,7 @@ const FALLBACK_PALETTE: Palette = {
   leafDeep: '#2f5a2a',
   leafBright: '#9cc45a',
   subsurface: '#e2e05a',
+  organ: '#f3d2dc',
   glow: 0,
 };
 
@@ -66,7 +68,8 @@ export function fitIterations(grammar: Grammar, seed: number): Grammar {
     const withinBudget =
       !expansion.truncated &&
       countSymbol(expansion.sentence, 'F') <= SEGMENT_BUDGET &&
-      countSymbol(expansion.sentence, 'L') <= LEAF_BUDGET;
+      countSymbol(expansion.sentence, 'L') <= LEAF_BUDGET &&
+      countSymbol(expansion.sentence, 'K') <= ORGAN_BUDGET;
     if (withinBudget) break;
     iterations--;
   }
@@ -81,6 +84,7 @@ function normalizePalette(palette: SpeciesDraft['palette']): Palette {
     leafDeep: pick(palette.leafDeep, FALLBACK_PALETTE.leafDeep),
     leafBright: pick(palette.leafBright, FALLBACK_PALETTE.leafBright),
     subsurface: pick(palette.subsurface, FALLBACK_PALETTE.subsurface),
+    organ: pick(palette.organ, FALLBACK_PALETTE.organ),
     glow: clampTo(PARAMETER_RANGES.glow, palette.glow, 0),
   };
 }
@@ -112,6 +116,8 @@ export function normalizeSpecies(draft: SpeciesDraft, seed: number): Species {
       angleJitter: clampTo(PARAMETER_RANGES.angleJitter, draft.form.angleJitter, 0.15),
       leafShape: draft.form.leafShape,
       leafSize: clampTo(PARAMETER_RANGES.leafSize, draft.form.leafSize, 0.25),
+      organShape: draft.form.organShape,
+      organSize: clampTo(PARAMETER_RANGES.organSize, draft.form.organSize, 0.12),
     },
     palette: normalizePalette(draft.palette),
     mood: draft.mood,

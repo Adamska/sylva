@@ -2,19 +2,28 @@
 
 import { useFrame } from '@react-three/fiber';
 import { useDeferredValue, useEffect, useMemo, useRef } from 'react';
-import { downloadGlb, exportSpecimenGlb, specimenFileName } from '@/engine/glbExporter';
-import { buildSpecimen, type SpecimenStats } from '@/engine/meshBuilder';
+import type { Group, Mesh } from 'three';
+import { requestBuild } from '@/engine/buildClient';
+import { toGeometry } from '@/engine/geometry';
+import type { SpecimenStats } from '@/engine/meshBuilder';
 import { useBotanyStore } from '@/store/useBotanyStore';
+import { Grove } from './Grove';
 import { MOODS } from './moods';
-import { applyMood, applyPalette, createSpecimenMaterials } from './specimenMaterials';
+import { applyMood, applyPalette, createSpecimenMaterials, organScale } from './specimenMaterials';
+import { studio, type DisplayedSpecimen } from './studioBridge';
 
 export const STAGE_ENVELOPE = { height: 4.6, spread: 2.7 } as const;
-const GROWTH_SECONDS = 2.2;
-const EXPORT_NOTICE_MS = 2400;
+const GROW_SECONDS = 2.2;
+const RETRACT_SECONDS = 0.55;
 const DEG_TO_RAD = Math.PI / 180;
 
 export function fitScale(stats: Pick<SpecimenStats, 'height' | 'spread'>): number {
   return Math.min(1, STAGE_ENVELOPE.height / stats.height, STAGE_ENVELOPE.spread / stats.spread);
+}
+
+function release(specimen: DisplayedSpecimen | null): void {
+  specimen?.bark.dispose();
+  specimen?.foliage.dispose();
 }
 
 export function BotanicalSpecimen() {
@@ -24,86 +33,99 @@ export function BotanicalSpecimen() {
   const palette = useBotanyStore((state) => state.species.palette);
   const mood = useBotanyStore((state) => state.species.mood);
   const growthCycle = useBotanyStore((state) => state.growthCycle);
-  const exportRequest = useBotanyStore((state) => state.exportRequest);
 
   const materials = useMemo(createSpecimenMaterials, []);
-  const build = useMemo(() => buildSpecimen({ grammar, form, seed }), [grammar, form, seed]);
-  const latestBuild = useRef(build);
-  const growth = useRef(0);
-  const windClock = useRef(0);
+  const group = useRef<Group>(null);
+  const barkMesh = useRef<Mesh>(null);
+  const foliageMesh = useRef<Mesh>(null);
+  const shown = useRef<DisplayedSpecimen | null>(null);
+  const staged = useRef<DisplayedSpecimen | null>(null);
+  const motion = useRef({ growth: 0, retracting: false, awaiting: false, windClock: 0 });
 
-  useEffect(() => () => materials.dispose(), [materials]);
+  useEffect(
+    () => () => {
+      materials.dispose();
+      release(shown.current);
+      release(staged.current);
+      shown.current = staged.current = studio.specimen = null;
+    },
+    [materials],
+  );
 
   useEffect(() => {
-    latestBuild.current = build;
-    useBotanyStore.getState().reportStats(build.stats);
+    let stale = false;
+    motion.current.awaiting = true;
+    void requestBuild({ grammar, form, seed }).then((data) => {
+      if (stale) return;
+      release(staged.current);
+      staged.current = { bark: toGeometry(data.bark), foliage: toGeometry(data.foliage), stats: data.stats, trunkRadius: form.trunkRadius };
+      motion.current.awaiting = false;
+      useBotanyStore.getState().reportStats(data.stats);
+    });
     return () => {
-      build.bark.dispose();
-      build.foliage.dispose();
+      stale = true;
     };
-  }, [build]);
+  }, [grammar, form, seed]);
 
   useEffect(() => {
-    growth.current = 0;
+    if (shown.current) motion.current.retracting = true;
   }, [growthCycle]);
 
   useEffect(() => {
-    materials.uniforms.uSpecimenHeight.value = build.stats.height;
-    materials.uniforms.uTrunkRadius.value = form.trunkRadius;
-  }, [materials, build, form]);
-
-  useEffect(() => applyPalette(materials.uniforms, palette), [materials, palette]);
+    if (!motion.current.retracting) applyPalette(materials.uniforms, palette);
+  }, [materials, palette]);
   useEffect(() => applyMood(materials.uniforms, MOODS[mood]), [materials, mood]);
 
-  useEffect(() => {
-    if (exportRequest === 0) return;
-    const { species, setExportStatus } = useBotanyStore.getState();
-    const { bark, foliage } = latestBuild.current;
-    let cancelled = false;
-    let reset: ReturnType<typeof setTimeout> | undefined;
-    const settle = (status: 'done' | 'error') => {
-      if (cancelled) return;
-      setExportStatus(status);
-      reset = setTimeout(() => setExportStatus('idle'), EXPORT_NOTICE_MS);
-    };
-    setExportStatus('working');
-    exportSpecimenGlb({ species, bark, foliage })
-      .then((buffer) => {
-        if (!cancelled) downloadGlb(buffer, specimenFileName(species));
-        settle('done');
-      })
-      .catch(() => settle('error'));
-    return () => {
-      cancelled = true;
-      clearTimeout(reset);
-    };
-  }, [exportRequest]);
-
   useFrame((state, delta) => {
-    const { wind, shading } = useBotanyStore.getState();
+    const { wind, shading, life, highlightRule, species } = useBotanyStore.getState();
     const { uniforms } = materials;
+    const current = motion.current;
     const step = Math.min(delta, 0.1);
     const heading = wind.headingDeg * DEG_TO_RAD;
 
-    windClock.current += step * wind.speed;
-    growth.current = Math.min(1, growth.current + step / GROWTH_SECONDS);
-    const eased = 1 - (1 - growth.current) ** 3;
+    if (current.retracting) {
+      current.growth = Math.max(0, current.growth - step / RETRACT_SECONDS);
+      if (current.growth === 0 && !current.awaiting) current.retracting = false;
+    } else {
+      current.growth = Math.min(1, current.growth + step / GROW_SECONDS);
+    }
 
+    const next = staged.current;
+    if (next && !current.retracting && barkMesh.current && foliageMesh.current && group.current) {
+      staged.current = null;
+      release(shown.current);
+      shown.current = studio.specimen = next;
+      barkMesh.current.geometry = next.bark;
+      foliageMesh.current.geometry = next.foliage;
+      group.current.scale.setScalar(fitScale(next.stats));
+      uniforms.uSpecimenHeight.value = next.stats.height;
+      uniforms.uTrunkRadius.value = next.trunkRadius;
+      applyPalette(uniforms, species.palette);
+    }
+
+    current.windClock += step * wind.speed;
     uniforms.uTime.value = state.clock.elapsedTime;
-    uniforms.uWindTime.value = windClock.current;
+    uniforms.uWindTime.value = current.windClock;
     uniforms.uWindStrength.value += (wind.strength - uniforms.uWindStrength.value) * Math.min(1, step * 4);
     uniforms.uTurbulence.value = wind.turbulence;
     uniforms.uWindDirection.value.set(Math.cos(heading), Math.sin(heading));
     uniforms.uFlutter.value = shading.flutter;
     uniforms.uTranslucency.value = shading.translucency;
     uniforms.uBarkRelief.value = shading.barkRelief;
-    uniforms.uGrowth.value = eased;
+    uniforms.uGrowth.value = (1 - (1 - current.growth) ** 3) * life.age;
+    uniforms.uSeason.value = life.season;
+    uniforms.uOrganScale.value = organScale(species.form.organShape, life.season);
+    uniforms.uHighlightRule.value = highlightRule ?? uniforms.uHighlightRule.value;
+    uniforms.uHighlight.value += ((highlightRule === null ? 0 : 1) - uniforms.uHighlight.value) * Math.min(1, step * 10);
   });
 
   return (
-    <group scale={fitScale(build.stats)}>
-      <mesh geometry={build.bark} material={materials.bark} customDepthMaterial={materials.barkDepth} castShadow frustumCulled={false} />
-      <mesh geometry={build.foliage} material={materials.foliage} customDepthMaterial={materials.foliageDepth} castShadow frustumCulled={false} />
-    </group>
+    <>
+      <Grove materials={materials} />
+      <group ref={group}>
+        <mesh ref={barkMesh} material={materials.bark} customDepthMaterial={materials.barkDepth} castShadow receiveShadow frustumCulled={false} dispose={null} />
+        <mesh ref={foliageMesh} material={materials.foliage} customDepthMaterial={materials.foliageDepth} castShadow receiveShadow frustumCulled={false} dispose={null} />
+      </group>
+    </>
   );
 }

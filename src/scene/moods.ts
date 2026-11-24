@@ -20,7 +20,7 @@ export interface MoodPreset {
 
 export const MOODS: Record<LightingMood, MoodPreset> = {
   goldenHour: {
-    label: 'Golden hour',
+    label: 'Gold',
     backdrop: '#07070a',
     halo: '#6b3a16',
     keyColor: '#ffe6c8',
@@ -50,7 +50,7 @@ export const MOODS: Record<LightingMood, MoodPreset> = {
     exposure: 1,
   },
   moonlit: {
-    label: 'Moonlit',
+    label: 'Moon',
     backdrop: '#05070c',
     halo: '#1d3358',
     keyColor: '#a9c1ff',
@@ -65,7 +65,7 @@ export const MOODS: Record<LightingMood, MoodPreset> = {
     exposure: 1.1,
   },
   abyssal: {
-    label: 'Abyssal',
+    label: 'Abyss',
     backdrop: '#030509',
     halo: '#0a2f55',
     keyColor: '#63d6e0',
@@ -78,5 +78,20 @@ export const MOODS: Record<LightingMood, MoodPreset> = {
     groundColor: '#03040a',
     rimColor: '#5ee6ff',
     exposure: 1.15,
+  },
+  dawn: {
+    label: 'Dawn',
+    backdrop: '#08070b',
+    halo: '#5a3550',
+    keyColor: '#ffe7dc',
+    keyIntensity: 2,
+    keyPosition: [-4.2, 5.4, 5.2],
+    backColor: '#ffbfd8',
+    backIntensity: 2.5,
+    backPosition: [3.4, 2.8, -6.5],
+    skyColor: '#4a5576',
+    groundColor: '#1f1a24',
+    rimColor: '#ffd6ea',
+    exposure: 1.05,
   },
 };

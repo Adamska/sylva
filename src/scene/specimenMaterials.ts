@@ -1,4 +1,4 @@
-import { Color, DoubleSide, FrontSide, ShaderMaterial, Vector2, Vector3 } from 'three';
+import { Color, DoubleSide, FrontSide, ShaderMaterial, UniformsLib, UniformsUtils, Vector2, Vector3 } from 'three';
 import barkFragment from '@/shaders/bark.frag';
 import barkVertex from '@/shaders/bark.vert';
 import depthFragment from '@/shaders/depth.frag';
@@ -6,7 +6,7 @@ import foliageFragment from '@/shaders/foliage.frag';
 import foliageVertex from '@/shaders/foliage.vert';
 import lightingChunk from '@/shaders/lighting.glsl';
 import windChunk from '@/shaders/wind.glsl';
-import type { Palette } from '@/types/botany';
+import type { OrganShape, Palette } from '@/types/botany';
 import type { MoodPreset } from './moods';
 
 function createUniforms() {
@@ -19,6 +19,10 @@ function createUniforms() {
     uSpecimenHeight: { value: 4 },
     uTrunkRadius: { value: 0.2 },
     uGrowth: { value: 1 },
+    uSeason: { value: 0.3 },
+    uOrganScale: { value: 1 },
+    uHighlightRule: { value: 0 },
+    uHighlight: { value: 0 },
     uFlutter: { value: 1 },
     uTranslucency: { value: 1 },
     uBarkRelief: { value: 1 },
@@ -36,6 +40,7 @@ function createUniforms() {
     uLeafBright: { value: new Color() },
     uSubsurface: { value: new Color() },
     uGlowColor: { value: new Color() },
+    uOrganColor: { value: new Color() },
   };
 }
 
@@ -52,19 +57,22 @@ export interface SpecimenMaterials {
 
 export function createSpecimenMaterials(): SpecimenMaterials {
   const uniforms = createUniforms();
+  const lit = { ...UniformsUtils.clone(UniformsLib.lights), ...uniforms };
   const barkVertexShader = `${windChunk}\n${barkVertex}`;
   const foliageVertexShader = `${windChunk}\n${foliageVertex}`;
 
   const bark = new ShaderMaterial({
     name: 'SylvaBark',
-    uniforms,
+    uniforms: lit,
+    lights: true,
     vertexShader: barkVertexShader,
     fragmentShader: `${lightingChunk}\n${barkFragment}`,
     side: FrontSide,
   });
   const foliage = new ShaderMaterial({
     name: 'SylvaFoliage',
-    uniforms,
+    uniforms: lit,
+    lights: true,
     vertexShader: foliageVertexShader,
     fragmentShader: `${lightingChunk}\n${foliageFragment}`,
     side: DoubleSide,
@@ -93,6 +101,7 @@ export function applyPalette(uniforms: SpecimenUniforms, palette: Palette): void
   uniforms.uLeafDeep.value.set(palette.leafDeep);
   uniforms.uLeafBright.value.set(palette.leafBright);
   uniforms.uSubsurface.value.set(palette.subsurface);
+  uniforms.uOrganColor.value.set(palette.organ);
   uniforms.uGlowColor.value.set(palette.leafBright).lerp(uniforms.uSubsurface.value, 0.25);
   uniforms.uGlow.value = palette.glow;
 }
@@ -105,4 +114,15 @@ export function applyMood(uniforms: SpecimenUniforms, mood: MoodPreset): void {
   uniforms.uSkyColor.value.set(mood.skyColor).multiplyScalar(mood.exposure);
   uniforms.uGroundColor.value.set(mood.groundColor).multiplyScalar(mood.exposure);
   uniforms.uRimColor.value.set(mood.rimColor);
+}
+
+const ramp = (from: number, to: number, value: number) => {
+  const t = Math.min(1, Math.max(0, (value - from) / (to - from)));
+  return t * t * (3 - 2 * t);
+};
+
+export function organScale(shape: OrganShape, season: number): number {
+  return shape === 'blossom'
+    ? ramp(0.02, 0.14, season) * (1 - ramp(0.42, 0.56, season))
+    : ramp(0.16, 0.3, season) * (1 - ramp(0.86, 0.97, season));
 }

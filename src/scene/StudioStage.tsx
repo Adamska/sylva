@@ -7,6 +7,7 @@ import backdropFragment from '@/shaders/backdrop.frag';
 import backdropVertex from '@/shaders/backdrop.vert';
 import { useBotanyStore } from '@/store/useBotanyStore';
 import { MOODS } from './moods';
+import { AMBIENCE_GROUP } from './studioBridge';
 
 const PEDESTAL_SEGMENTS = 96;
 const FLOOR_LEVEL = -0.565;
@@ -61,7 +62,7 @@ function Backdrop({ base, halo }: { base: string; halo: string }) {
   }, [material, base, halo, aspect]);
 
   return (
-    <mesh material={material} renderOrder={-10} frustumCulled={false}>
+    <mesh name={AMBIENCE_GROUP} material={material} renderOrder={-10} frustumCulled={false}>
       <planeGeometry args={[2, 2]} />
     </mesh>
   );
@@ -104,8 +105,8 @@ function Pedestal({ accent }: { accent: string }) {
       <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]} material={assets.contact}>
         <circleGeometry args={[0.6, 48]} />
       </mesh>
-      <mesh position={[0, FLOOR_LEVEL, 0]} rotation={[-Math.PI / 2, 0, 0]} material={assets.floor} receiveShadow>
-        <circleGeometry args={[18, 96]} />
+      <mesh name={AMBIENCE_GROUP} position={[0, FLOOR_LEVEL, 0]} rotation={[-Math.PI / 2, 0, 0]} material={assets.floor} receiveShadow>
+        <circleGeometry args={[24, 96]} />
       </mesh>
     </group>
   );
@@ -113,6 +114,7 @@ function Pedestal({ accent }: { accent: string }) {
 
 export function StudioStage() {
   const mood = MOODS[useBotanyStore((state) => state.species.mood)];
+  const reach = useBotanyStore((state) => (state.grove ? 9.5 : 5.5));
 
   return (
     <>
@@ -128,7 +130,7 @@ export function StudioStage() {
         shadow-normalBias={0.03}
         shadow-radius={6}
       >
-        <orthographicCamera attach="shadow-camera" args={[-5.5, 5.5, 6, -3, 0.5, 26]} />
+        <orthographicCamera attach="shadow-camera" args={[-reach, reach, reach + 0.5, -reach * 0.6, 0.5, 30]} />
       </directionalLight>
       <directionalLight position={mood.backPosition} color={mood.backColor} intensity={mood.backIntensity * mood.exposure * 0.45} />
       <Pedestal accent={mood.rimColor} />

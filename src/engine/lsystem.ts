@@ -1,4 +1,4 @@
-import type { Grammar, ProductionRule } from '@/types/botany';
+import { AXIOM_ORIGIN, type Grammar, type ProductionRule } from '@/types/botany';
 import { createRng, type Rng } from './random';
 
 export const EXPANSION_LIMITS = {
@@ -8,19 +8,26 @@ export const EXPANSION_LIMITS = {
 
 export interface Expansion {
   sentence: string;
+  origins: Uint8Array;
   generations: number;
   truncated: boolean;
 }
 
-type RuleTable = Map<string, string[]>;
+interface Successor {
+  text: string;
+  rule: number;
+}
+
+type RuleTable = Map<string, Successor[]>;
 
 function buildRuleTable(rules: readonly ProductionRule[]): RuleTable {
   const table: RuleTable = new Map();
-  for (const rule of rules) {
+  rules.forEach((rule, index) => {
+    const successor = { text: rule.successor, rule: index };
     const successors = table.get(rule.symbol);
-    if (successors) successors.push(rule.successor);
-    else table.set(rule.symbol, [rule.successor]);
-  }
+    if (successors) successors.push(successor);
+    else table.set(rule.symbol, [successor]);
+  });
   return table;
 }
 
@@ -30,22 +37,30 @@ function moduleEnd(sentence: string, index: number): number {
   return close === -1 ? sentence.length : close + 1;
 }
 
-function rewrite(sentence: string, table: RuleTable, rng: Rng, budget: number): string | null {
+function rewrite(sentence: string, origins: Uint8Array, table: RuleTable, rng: Rng, budget: number): Expansion | null {
   const parts: string[] = [];
+  const partOrigins: number[] = [];
   let length = 0;
   let index = 0;
   while (index < sentence.length) {
     const end = moduleEnd(sentence, index);
     const successors = table.get(sentence[index]);
-    const piece = successors
-      ? successors[successors.length === 1 ? 0 : Math.floor(rng() * successors.length)]
-      : sentence.slice(index, end);
+    const chosen = successors ? successors[successors.length === 1 ? 0 : Math.floor(rng() * successors.length)] : null;
+    const piece = chosen ? chosen.text : sentence.slice(index, end);
     length += piece.length;
     if (length > budget) return null;
     parts.push(piece);
+    partOrigins.push(chosen ? chosen.rule : origins[index]);
     index = end;
   }
-  return parts.join('');
+
+  const nextOrigins = new Uint8Array(length);
+  let offset = 0;
+  for (let part = 0; part < parts.length; part++) {
+    nextOrigins.fill(partOrigins[part], offset, offset + parts[part].length);
+    offset += parts[part].length;
+  }
+  return { sentence: parts.join(''), origins: nextOrigins, generations: 0, truncated: false };
 }
 
 export function expandGrammar(grammar: Grammar, seed: number): Expansion {
@@ -53,13 +68,15 @@ export function expandGrammar(grammar: Grammar, seed: number): Expansion {
   const rng = createRng(seed);
   const rounds = Math.min(Math.max(0, Math.floor(grammar.iterations)), EXPANSION_LIMITS.maxIterations);
   let sentence = grammar.axiom.slice(0, EXPANSION_LIMITS.maxSymbols);
+  let origins: Uint8Array = new Uint8Array(sentence.length).fill(AXIOM_ORIGIN);
   let generations = 0;
 
   for (; generations < rounds; generations++) {
-    const next = rewrite(sentence, table, rng, EXPANSION_LIMITS.maxSymbols);
-    if (next === null) return { sentence, generations, truncated: true };
-    if (next === sentence) break;
-    sentence = next;
+    const next = rewrite(sentence, origins, table, rng, EXPANSION_LIMITS.maxSymbols);
+    if (next === null) return { sentence, origins, generations, truncated: true };
+    if (next.sentence === sentence) break;
+    sentence = next.sentence;
+    origins = next.origins;
   }
-  return { sentence, generations, truncated: false };
+  return { sentence, origins, generations, truncated: false };
 }
