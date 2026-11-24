@@ -29,7 +29,7 @@ export const LEAF_PROFILES: Record<LeafShape, LeafProfile> = {
     outline: (t) => (0.72 + 0.28 * Math.sin(Math.PI * Math.min(1, t / 0.55))) * (1 - t ** 1.8) ** 0.9,
   },
   ovate: { aspect: 0.56, cluster: 2, splayDeg: 58, droop: 0.7, fold: 0.18, rows: 4, flutter: 0.9, outline: (t) => Math.sin(Math.PI * t ** 0.7) ** 0.75 },
-  polyp: { aspect: 0.82, cluster: 3, splayDeg: 68, droop: -0.25, fold: 0.35, rows: 3, flutter: 0.5, outline: (t) => Math.sin(Math.PI * t ** 0.9) ** 0.5 },
+  polyp: { aspect: 0.82, cluster: 4, splayDeg: 68, droop: -0.25, fold: 0.35, rows: 3, flutter: 0.5, outline: (t) => Math.sin(Math.PI * t ** 0.9) ** 0.5 },
 };
 
 export const FOLIAGE_LIMITS = { maxBlades: 42_000 } as const;

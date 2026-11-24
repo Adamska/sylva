@@ -173,7 +173,9 @@ function buildBarkGeometry(skeleton: Skeleton, limbs: LimbMetrics, trunkRadius: 
   return geometry;
 }
 
-export function buildSpecimen(species: Species): SpecimenBuild {
+export type GrowthInputs = Pick<Species, 'grammar' | 'form' | 'seed'>;
+
+export function buildSpecimen(species: GrowthInputs): SpecimenBuild {
   const startedAt = performance.now();
   const expansion = expandGrammar(species.grammar, species.seed);
   const skeleton = interpretSentence(expansion.sentence, species.grammar, species.form, species.seed);
