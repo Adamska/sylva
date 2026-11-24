@@ -1,12 +1,16 @@
 # Sylva
 
-Sylva is an interactive atelier for growing plants from formal grammars. A bracketed L-system is expanded, walked by a 3D turtle, skinned into two batched meshes, and lit by custom GLSL wind and subsurface-scattering shaders on a gallery plinth. Describe a species in plain language to get a new grammar, tune it live, then export the specimen as a binary `.glb`.
+Sylva is an interactive atelier for growing plants from formal grammars. A bracketed L-system is expanded, walked by a 3D turtle, skinned into two batched meshes, and lit by custom GLSL wind and subsurface-scattering shaders on a gallery plinth. Describe a species in plain language to get a new grammar, breed it by eye, tune it live, then export a model, a video or a printed plate.
 
 ![Weeping Willow under golden-hour light](docs/screenshots/weeping-willow.jpg)
 
-| Alpine Pine | Desert Agave | Bioluminescent Coral Tree |
+| Alpine Pine | Desert Agave | Bioluminescent Coral Tree | Mountain Cherry |
+| --- | --- | --- | --- |
+| ![Alpine Pine](docs/screenshots/alpine-pine.jpg) | ![Desert Agave](docs/screenshots/desert-agave.jpg) | ![Bioluminescent Coral Tree](docs/screenshots/coral-tree.jpg) | ![Mountain Cherry](docs/screenshots/mountain-cherry.jpg) |
+
+| Evolve by eye | Trace a rule into the scene | Botanical plate |
 | --- | --- | --- |
-| ![Alpine Pine](docs/screenshots/alpine-pine.jpg) | ![Desert Agave](docs/screenshots/desert-agave.jpg) | ![Bioluminescent Coral Tree](docs/screenshots/coral-tree.jpg) |
+| ![Evolve tray with six rendered variants](docs/screenshots/evolve.jpg) | ![Hovering a rule lights the growth it produced](docs/screenshots/rule-highlight.jpg) | ![Exported botanical plate](docs/screenshots/botanical-plate.jpg) |
 
 ## Getting started
 
@@ -15,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. The Weeping Willow grows on load; the other presets live in the Herbarium at the top of the inspector.
+Open `http://localhost:3000`. The Weeping Willow grows on load.
 
 | Script | Purpose |
 | --- | --- |
@@ -37,14 +41,52 @@ OPENAI_MODEL=gpt-5-mini
 
 ## Using the atelier
 
-- **Herbarium** switches between the four built-in species and replays the growth animation.
-- **Grammar** edits the axiom and production rules as text, with sliders for iterations, default branch angle, step length, radius ratio and gravity tropism. Every edit rebuilds the mesh.
-- **Form** covers trunk radius, per-depth length decay, angular jitter, leaf size and leaf shape.
-- **Wind** sets strength, tempo, turbulence, heading and leaf flutter. **Light** selects a mood and adjusts leaf translucency, bark relief, bioluminescence and bloom.
-- **Reseed** draws new random jitter, **Orbit** toggles the slow camera turn, and **Export .glb** downloads the current specimen.
-- The **Species** bar at the bottom turns a description such as `crimson weeping cherry at midnight` into a grammar, palette and lighting mood.
+### Finding a plant
 
-Drag to orbit and scroll to zoom. The readout in the lower left shows live frame rate alongside the size of the current build.
+- **Herbarium.** The shelf at the top of the inspector shows the five built-in species as rendered thumbnails. **Save** adds the current specimen to your own collection, which is kept in the browser.
+- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history.
+- **Evolve.** Six rendered variants of the current specimen appear with a short description of how each differs. Pick one and it becomes the parent of the next six. This explores a species without reading a single rule.
+- **Refine.** The chips above the species bar nudge the current plant: more weeping, denser, taller, wilder and so on.
+
+### Shaping it
+
+- **Grammar.** The axiom and rules are multi-line, colour-coded fields. Unbalanced brackets are flagged as you type, and **Alphabet** opens a legend. Hover or focus a rule and the growth it produced lights up in the scene while the rest dims.
+- **Form.** Trunk radius, length decay, angular jitter, leaf shape and size, and the flower or fruit drawn by `K`.
+- **Life.** **Age** scrubs the plant from seed to maturity. **Season** runs from spring buds through summer to autumn colour, falling leaves and bare winter wood. Blossoms appear in spring and fruit follows.
+- **Palette.** Six colour swatches plus bioluminescence.
+- **Wind** and **Stage.** Strength, tempo, turbulence and heading; lighting mood, leaf translucency, bark relief, bloom, haze and depth of field. **Grove** grows four siblings from other seeds to show natural variation.
+
+Every change to the species is undoable. **Link** copies a URL that carries the whole species.
+
+### Shortcuts
+
+| Key | Action |
+| --- | --- |
+| `Cmd/Ctrl + K` or `?` | Command palette |
+| `1` to `5` | Built-in species |
+| `V` | Evolve variants |
+| `R` | Reseed |
+| `S` | Save to herbarium |
+| `L` | Copy share link |
+| `O` `G` `P` | Orbit, grove, presentation mode |
+| `E` | Export binary glTF |
+| `Cmd/Ctrl + Z`, `Shift + Cmd/Ctrl + Z` | Undo, redo |
+| `Esc` | Close the palette, tray or presentation |
+
+Presentation mode hides the interface, orbits slowly and cycles through the species.
+
+## Export
+
+| Format | Contents |
+| --- | --- |
+| Binary glTF | `Bark` and `Foliage` meshes with positions, normals, UVs, baked colour in `COLOR_0` and wind weights in `COLOR_1` (R branch flex, G leaf sway, B phase) |
+| glTF with detail levels | The same at three densities, named `_LOD0` to `_LOD2` for engine import |
+| USDZ | A lighter mesh with vertex colours and duplicated back faces for leaves |
+| Transparent PNG | The current view at 3000 pixels on the long edge, with the plinth and without backdrop, floor or haze |
+| Turntable video | An eight second full rotation of the live canvas |
+| Botanical plate | A 2400 by 3200 poster with a studio-lit portrait, the grammar, parameters and palette |
+
+Coordinates are in scene units with Y up. The glTF exports of all presets pass the Khronos validator with no errors or warnings, and the USDZ opens in Pixar USD with both meshes and their colours; it has not been tried in Quick Look on a device. Stills and plates are rendered off screen and do not include bloom. The video is H.264 or WebM depending on the browser.
 
 ## L-system syntax
 
@@ -61,7 +103,8 @@ A grammar is an axiom plus up to eight production rules. On each iteration every
 | `\` `/` | Roll left and right around the heading |
 | `\|` | Turn around |
 | `[` `]` | Push and pop the turtle state to start and finish a branch |
-| `L` | Attach a leaf cluster at the current position |
+| `L` | Attach a leaf cluster |
+| `K` | Attach a flower or a fruit, depending on the species |
 | other letters | Growth buds that only matter through their rules |
 
 Any symbol may carry a numeric argument in parentheses. `F(1.5)` scales that step by 1.5, `+(35)` and `/(137.5)` rotate by an explicit number of degrees instead of the default branch angle, and `L(0.6)` scales a leaf. When a symbol with an argument is rewritten, the whole module is replaced.
@@ -85,6 +128,7 @@ Any symbol may carry a numeric argument in parentheses. `F(1.5)` scales that ste
 - Deeper bracket levels respond more strongly to gravity, which lets a trunk stand straight while its whips hang.
 - A rule with an empty successor erases its symbol. `L -> (empty)` keeps leaves on the youngest growth only, which is how the coral tree lights just its tips.
 - A rule that rewrites `L` to itself drops the argument, so `L(0.55)` is a small newborn leaf that reaches full size one generation later. The agave rosette uses this.
+- Every drawn symbol remembers which rule emitted it. That provenance is what the rule tracing in the inspector displays.
 
 ### A worked example
 
@@ -100,16 +144,16 @@ W  ->  F(0.6)L/(137.5)F(0.6)L/(137.5)F(0.6)L/(137.5)F(0.6)LW
 
 ### Safety caps
 
-Custom and generated grammars cannot stall the browser. Expansion stops before a sentence exceeds 180,000 symbols, the turtle stops at 26,000 segments, 14,000 leaf nodes or 48 nested brackets, and foliage is limited to 42,000 blades. When a cap is reached the last complete state is rendered and the readout reports that growth was capped. Grammars arriving from the API are also trimmed to an iteration count that stays well inside these limits.
+Custom and generated grammars cannot stall the browser. Expansion stops before a sentence exceeds 180,000 symbols, the turtle stops at 26,000 segments, 14,000 leaf and organ nodes or 48 nested brackets, and foliage is limited to 42,000 blades. When a cap is reached the last complete state is rendered and the readout reports that growth was capped. Grammars arriving from the API, from Evolve or from Refine are also trimmed to an iteration count that stays well inside these limits.
 
 ## Rendering
 
 ### Geometry
 
-The whole specimen is two draw calls, plus two more in the shadow pass.
+Meshes are built in a web worker and transferred to the main thread, so the interface stays responsive while a grammar grows. The whole specimen is two draw calls, plus two more in the shadow pass.
 
-- **Bark** is one indexed `BufferGeometry`. Consecutive segments share rings, the reference frame is parallel-transported along each limb to avoid twist, side counts fall from twelve on the trunk to four on twigs, and tips are capped. Attributes: `position`, `normal`, `uv` (around the limb, distance along it), `aBranchFactor` (0 at the root to 1 at flexible tips) and `aBarkRoughness` (1 on the trunk, lower on young wood).
-- **Foliage** is one indexed `BufferGeometry` of curved, folded blades. Attributes: `position`, `normal`, `uv`, `aAnchor` (attachment point), `aSway` (per-vertex flutter weight), `aPhase`, `aBranchFactor` and `aShade` (canopy depth).
+- **Bark** is one indexed geometry. Consecutive segments share rings, the reference frame is parallel-transported along each limb to avoid twist, side counts fall from twelve on the trunk to five on twigs (fewer at reduced detail levels), and tips are capped. Attributes: `position`, `normal`, `uv`, `aBranchFactor` (0 at the root to 1 at flexible tips), `aBarkRoughness` and `aRule`.
+- **Foliage** is one indexed geometry of curved, folded blades, five-petalled blossoms and berries. Attributes: `position`, `normal`, `uv`, `aAnchor` (attachment point), `aSway` (per-vertex flutter weight), `aPhase`, `aBranchFactor`, `aShade` (canopy depth), `aRule` and `aOrgan`.
 
 ### Shaders
 
@@ -117,23 +161,25 @@ All sources live in `src/shaders` and are imported as text.
 
 | File | Role |
 | --- | --- |
-| `wind.glsl` | Shared `windOffset(point, flex)`: a trunk lean weighted by height squared plus multi-octave limb eddies weighted by flexibility squared, so roots stay anchored |
+| `wind.glsl` | Shared `windOffset(point, flex)`: a trunk lean weighted by height squared plus multi-octave limb eddies weighted by flexibility squared, phased by world position so neighbours sway out of step |
 | `bark.vert` | Applies wind and the growth reveal, which thickens limbs from the root outward |
 | `bark.frag` | Cylinder-mapped plate and grain noise, derivative bump mapping, cavity shading, warm rim light and pulsing sap veins for luminous species |
-| `foliage.vert` | Carries each blade with its branch by evaluating the same wind function at `aAnchor`, then adds flutter, twist and unfurling |
-| `foliage.frag` | Vein and margin anatomy, wrapped diffuse light, and view-dependent transmission that brightens as the camera looks through a leaf toward a light |
-| `lighting.glsl` | Shared key, back, hemisphere and rim light uniforms |
-| `depth.frag` | Shadow pass companion so shadows sway with the plant |
-| `backdrop.vert` `backdrop.frag` | Screen-space obsidian backdrop with a radial halo |
+| `foliage.vert` | Carries each blade with its branch by evaluating the same wind function at `aAnchor`, then adds flutter, unfurling, seasonal budding and the tumbling fall of shed leaves |
+| `foliage.frag` | Vein and margin anatomy, autumn colour, petals and fruit, wrapped diffuse light and view-dependent transmission that brightens as the camera looks through a leaf toward a light |
+| `lighting.glsl` | Shared lights, the key light's shadow map so the canopy shades its own branches, and the rule highlight |
+| `depth.frag` | Shadow pass companion so shadows sway and shed with the plant |
+| `motes.*` `mist.*` | Dust that catches the back light, luminous spores for glowing species, and ground haze |
+| `backdrop.*` `resolve.frag` | Screen-space backdrop, and tone mapping for off-screen captures |
 
-Frequently adjusted uniforms: `uWindStrength`, `uWindTime`, `uTurbulence`, `uWindDirection`, `uFlutter`, `uTranslucency`, `uBarkRelief`, `uGlow` and `uGrowth`. Light directions and colours come from the selected mood in `src/scene/moods.ts`, which also drives the Three.js lights on the plinth so both agree.
+Light directions and colours come from the selected mood in `src/scene/moods.ts`, which also drives the Three.js lights on the plinth so both agree.
 
 ### Frame discipline
 
-- No React state is set inside `useFrame`. Uniforms are written from `useBotanyStore.getState()`, and the frame-rate readout updates DOM text directly.
-- Sylva's frame callbacks allocate nothing; scratch vectors live in the shared uniform objects.
-- Geometries are disposed on every rebuild and materials on unmount. Live WebGL buffer, texture, program and framebuffer counts were checked to be unchanged after 48 parameter edits and six species switches.
-- Measured in Chrome on an Apple M1 Max with vsync disabled, including the shadow pass, 4x MSAA and bloom: about 320 to 360 fps on a 2520x1575 canvas and about 580 fps at 1440x900 for every preset. Mesh builds take between 1 and 45 ms.
+- No React state is set inside `useFrame`. Uniforms are written from `useBotanyStore.getState()`, geometry is swapped on mesh references, and the frame-rate readout updates DOM text directly.
+- Sylva's frame callbacks allocate nothing; scratch vectors live at module scope or in the shared uniform objects.
+- Geometries are disposed on every rebuild and materials on unmount. Live WebGL buffer, texture, program, vertex array, framebuffer and renderbuffer counts were checked to be unchanged after 60 parameter edits, seven species switches, 24 rendered thumbnails, three grove cycles and repeated captures.
+- Measured in Chrome on an Apple M1 Max with vsync disabled, on a 2520 by 1575 canvas with self shadowing, 4x MSAA, bloom and atmosphere: 336 to 393 fps across the five presets and 337 fps with the grove enabled. Mesh builds take between 1 and 60 ms.
+- Depth of field turns multisampling off while it is active, because the two do not combine in the post-processing chain.
 
 ## Grammar API
 
@@ -147,37 +193,38 @@ Frequently adjusted uniforms: `uWindStrength`, `uWindTime`, `uTurbulence`, `uWin
 { "species": { "name": "...", "latin": "...", "grammar": {}, "form": {}, "palette": {}, "mood": "abyssal", "seed": 0 }, "source": "procedural" }
 ```
 
-`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator matches the description against nine plant archetypes, reads colour, mood, stature and density words, and perturbs branching angles from a hash of the text.
-
-## Export
-
-**Export .glb** writes a binary glTF 2.0 file through `GLTFExporter` with a root node named after the species and two meshes, `Bark` and `Foliage`. Each carries positions, normals, UVs and baked vertex colours on a standard PBR material, with emission for luminous species. Coordinates are in scene units with Y up and are not rescaled to the stage. Exports of all four presets pass the Khronos glTF validator with no errors or warnings. Wind is a shader effect and is not part of the file.
+`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator matches the description against ten plant archetypes, reads colour, mood, stature and density words, and perturbs branching angles from a hash of the text.
 
 ## Project layout
 
 ```text
 src/
   app/                 Next.js App Router shell and the /api/grammar route
-  components/          Inspector, rule editor, prompt bar, placard and readout
+  capture/             Off-screen snapshots, portraits, thumbnails, stills, video and plate
+  components/          Inspector, rule editor, evolve tray, prompt bar, command palette
   engine/
-    lsystem.ts         Grammar expansion with symbol budget
+    lsystem.ts         Grammar expansion with symbol budget and rule provenance
     turtle.ts          3D turtle interpretation into a skeleton
     limbMetrics.ts     Pipe-model radii, flexibility and path lengths
-    meshBuilder.ts     Batched bark geometry and build orchestration
-    leafBuilder.ts     Batched blade geometry per leaf shape
-    glbExporter.ts     Binary glTF export
+    barkBuilder.ts     Batched bark mesh
+    leafBuilder.ts     Leaf, blossom and berry placement
+    foliageWriter.ts   Blade and berry vertex writer
+    meshBuilder.ts     Build orchestration and statistics
+    specimen.worker.ts Worker entry, with buildClient.ts as its caller
+    mutation.ts        Variant breeding for Evolve
     grammarSynth.ts    Deterministic description-to-species generator
-    archetypes.ts      Plant archetypes used by the generator
     speciesNormalizer.ts  Repair and clamping of untrusted grammars
-  scene/               Canvas, specimen, studio stage, moods and materials
+    exportScene.ts     Baked export meshes shared by glbExporter.ts and usdzExporter.ts
+  scene/               Canvas, specimen, grove, camera rig, atmosphere, stage and materials
   shaders/             GLSL sources
-  store/               Zustand store
+  store/               Zustand slices for the species, the studio and the herbarium
+  studio/              Actions, commands, refinements, shortcuts and share links
   types/               Zod schemas, types and species presets
 ```
 
 ## Stack
 
-Next.js 16 with the App Router and React 19, TypeScript in strict mode, Three.js through React Three Fiber and Drei, `three-stdlib` for export, Tailwind CSS 4, Zustand, Zod, and the Vercel AI SDK with the OpenAI provider. The canvas is loaded client-side only.
+Next.js 16 with the App Router and React 19, TypeScript in strict mode, Three.js through React Three Fiber, Drei and the post-processing bindings, `three-stdlib` for glTF export, Tailwind CSS 4, Zustand, Zod, and the Vercel AI SDK with the OpenAI provider. The canvas is loaded client-side only.
 
 ## License
 
