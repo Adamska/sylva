@@ -1,5 +1,7 @@
-import { PARAMETER_RANGES, speciesSchema, type LightingMood, type Palette, type Species } from '@/types/botany';
+import { speciesSchema, type LightingMood, type Palette, type Species } from '@/types/botany';
 import { ARCHETYPES, DEFAULT_ARCHETYPE, type Archetype } from './archetypes';
+import { hslToHex } from './colorOps';
+import { clampParameter as clamp, perturbAngles, vary } from './grammarOps';
 import { createRng, hashString, type Rng } from './random';
 import { fitIterations } from './speciesNormalizer';
 
@@ -35,17 +37,6 @@ function hasWord(text: string, words: readonly string[]): boolean {
   const tokens = text.split(/[^a-z]+/).flatMap((token) => [token, token.replace(/s$/, '')]);
   return words.some((word) => (word.includes(' ') ? text.includes(word) : tokens.includes(word)));
 }
-const vary = (rng: Rng, amount: number) => 1 + amount * (rng() * 2 - 1);
-
-function hslToHex(hue: number, saturation: number, lightness: number): string {
-  const chroma = saturation * Math.min(lightness, 1 - lightness);
-  const channel = (offset: number) => {
-    const k = (offset + hue / 30) % 12;
-    const value = lightness - chroma * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-    return Math.round(value * 255).toString(16).padStart(2, '0');
-  };
-  return `#${channel(0)}${channel(8)}${channel(4)}`;
-}
 
 function tintPalette(palette: Palette, tint: Tint, glow: number): Palette {
   return {
@@ -56,14 +47,6 @@ function tintPalette(palette: Palette, tint: Tint, glow: number): Palette {
     organ: hslToHex(tint.hue - 12, Math.min(1, tint.saturation + 0.1), 0.78),
     glow,
   };
-}
-
-function perturbAngles(sentence: string, rng: Rng): string {
-  return sentence.replace(/([+\-&^\\/])\((\d+(?:\.\d+)?)\)/g, (module, symbol: string, argument: string) => {
-    const degrees = Number.parseFloat(argument);
-    if (Math.abs(degrees - 137.5) < 0.01) return module;
-    return `${symbol}(${(degrees * vary(rng, 0.14)).toFixed(1)})`;
-  });
 }
 
 function pickArchetype(text: string, rng: Rng): Archetype {
@@ -96,12 +79,10 @@ export function synthesizeSpecies(prompt: string): Species {
   const gnarl = hasWord(text, ['twisted', 'gnarled', 'wild', 'chaotic', 'windswept']) ? 0.2 : 0;
   const glow = hasWord(text, GLOW_WORDS) ? 0.55 + 0.4 * rng() : palette.glow;
   const tint = TINTS.find((candidate) => hasWord(text, candidate.words));
-  const clamp = (key: keyof typeof PARAMETER_RANGES, value: number) =>
-    Math.round(Math.min(PARAMETER_RANGES[key].max, Math.max(PARAMETER_RANGES[key].min, value)) * 1000) / 1000;
 
   const tuned = {
-    axiom: perturbAngles(grammar.axiom, rng),
-    rules: grammar.rules.map((rule) => ({ symbol: rule.symbol, successor: perturbAngles(rule.successor, rng) })),
+    axiom: perturbAngles(grammar.axiom, rng, 0.14),
+    rules: grammar.rules.map((rule) => ({ symbol: rule.symbol, successor: perturbAngles(rule.successor, rng, 0.14) })),
     iterations: clamp('iterations', grammar.iterations + lushness),
     angleDeg: clamp('angleDeg', grammar.angleDeg * vary(rng, 0.12)),
     stepLength: clamp('stepLength', grammar.stepLength * stature * vary(rng, 0.08)),

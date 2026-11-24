@@ -3,7 +3,9 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useBotanyStore } from '@/store/useBotanyStore';
+import { useHerbariumStore } from '@/store/useHerbariumStore';
 import { readSharedSpecies } from '@/studio/shareLink';
+import { EvolveTray } from './EvolveTray';
 import { FrameReadout } from './FrameReadout';
 import { GrammarControls } from './GrammarControls';
 import { SpeciesPromptBar } from './SpeciesPromptBar';
@@ -21,8 +23,10 @@ const SpecimenCanvas = dynamic(() => import('@/scene/SpecimenCanvas'), {
 
 export function Atelier() {
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [evolving, setEvolving] = useState(false);
 
   useEffect(() => {
+    void useHerbariumStore.persist.rehydrate();
     const shared = readSharedSpecies(window.location.hash);
     if (shared) useBotanyStore.getState().adoptSpecies(shared);
   }, []);
@@ -39,14 +43,15 @@ export function Atelier() {
           <SpecimenPlacard />
           <div className="flex items-end gap-6">
             <FrameReadout />
-            <div className="flex flex-1 justify-center md:pr-44">
+            <div className="flex flex-1 flex-col items-center gap-3 md:pr-44">
+              {evolving && <EvolveTray onClose={() => setEvolving(false)} />}
               <SpeciesPromptBar />
             </div>
           </div>
         </div>
 
         <div className={`${inspectorOpen ? 'flex' : 'hidden'} absolute inset-y-4 right-4 max-h-[calc(100%-5rem)] lg:static lg:flex lg:max-h-full`}>
-          <GrammarControls onEvolve={() => undefined} />
+          <GrammarControls onEvolve={() => setEvolving((open) => !open)} />
         </div>
       </div>
 
