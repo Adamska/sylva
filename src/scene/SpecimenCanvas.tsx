@@ -12,6 +12,8 @@ import { FrameProbe } from './frameProbe';
 import { StudioStage } from './StudioStage';
 import { AMBIENCE_GROUP } from './studioBridge';
 
+const MSAA_SAMPLES = 4;
+
 export default function SpecimenCanvas() {
   const autoRotate = useBotanyStore((state) => state.autoRotate || state.presenting);
   const bloom = useBotanyStore((state) => state.shading.bloom);
@@ -41,7 +43,7 @@ export default function SpecimenCanvas() {
         autoRotate={autoRotate}
         autoRotateSpeed={0.45}
       />
-      <EffectComposer multisampling={4}>
+      <EffectComposer multisampling={depthOfField > 0 ? 0 : MSAA_SAMPLES}>
         {depthOfField > 0 ? <DepthOfField target={[0, focusHeight, 0]} focalLength={0.025} bokehScale={depthOfField * 3} /> : <></>}
         <Bloom mipmapBlur intensity={bloom} luminanceThreshold={0.82} luminanceSmoothing={0.3} radius={0.72} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
