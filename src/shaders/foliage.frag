@@ -15,7 +15,7 @@ float transmittedLight(vec3 normal, vec3 viewDirection, vec3 lightDirection) {
   float lit = clamp(dot(-normal, lightDirection) * 0.85 + 0.15, 0.0, 1.0);
   vec3 scattered = normalize(lightDirection + normal * 0.32);
   float forward = pow(clamp(dot(viewDirection, -scattered), 0.0, 1.0), 4.0);
-  return lit * (0.3 + 1.7 * forward);
+  return DIFFUSE_SCALE * lit * (0.35 + 2.4 * forward);
 }
 
 void main() {
@@ -41,18 +41,19 @@ void main() {
   float thinness = (1.0 - veins * 0.7) * mix(0.8, 1.15, margin);
   vec3 through = uKeyColor * transmittedLight(normal, viewDirection, uKeyDirection);
   through += uBackColor * transmittedLight(normal, viewDirection, uBackDirection);
-  vec3 scatterTint = mix(albedo, uSubsurface, 0.65);
+  vec3 scatterTint = mix(albedo, uSubsurface, 0.5);
   color += scatterTint * through * thinness * uTranslucency * mix(0.55, 1.0, vShade);
 
   vec3 halfVector = normalize(uKeyDirection + viewDirection);
   float gloss = pow(max(dot(normal, halfVector), 0.0), 42.0);
-  color += uKeyColor * gloss * 0.16 * vShade;
-  color += uRimColor * fresnelTerm(normal, viewDirection, 4.0) * 0.12;
+  color += uKeyColor * gloss * 0.12 * vShade;
+  color += uRimColor * fresnelTerm(normal, viewDirection, 4.0) * 0.05;
 
   float breath = 0.5 + 0.5 * sin(uTime * 1.3 + vPhase * 6.28318530718);
   float core = 1.0 - smoothstep(0.0, 0.95, across);
-  vec3 lumen = mix(uLeafBright, uSubsurface, breath * 0.6 + margin * 0.4);
-  color += lumen * uGlow * (0.55 + 1.5 * breath) * (0.35 + 0.65 * core);
+  vec3 lumen = mix(uLeafBright, uSubsurface, smoothstep(0.35, 1.0, across) * 0.85);
+  color = mix(color, color * 0.3, uGlow);
+  color += lumen * lumen * uGlow * (0.7 + 1.1 * breath) * (0.45 + 0.55 * core);
 
   gl_FragColor = vec4(color, 1.0);
   #include <tonemapping_fragment>

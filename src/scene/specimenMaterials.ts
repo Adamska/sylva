@@ -17,6 +17,8 @@ function createUniforms() {
     uTurbulence: { value: 1 },
     uWindDirection: { value: new Vector2(1, 0) },
     uSpecimenHeight: { value: 4 },
+    uTrunkRadius: { value: 0.2 },
+    uGrowth: { value: 1 },
     uFlutter: { value: 1 },
     uTranslucency: { value: 1 },
     uBarkRelief: { value: 1 },
@@ -97,10 +99,10 @@ export function applyPalette(uniforms: SpecimenUniforms, palette: Palette): void
 
 export function applyMood(uniforms: SpecimenUniforms, mood: MoodPreset): void {
   uniforms.uKeyDirection.value.set(...mood.keyPosition).normalize();
-  uniforms.uKeyColor.value.set(mood.keyColor).multiplyScalar(mood.keyIntensity);
+  uniforms.uKeyColor.value.set(mood.keyColor).multiplyScalar(mood.keyIntensity * mood.exposure);
   uniforms.uBackDirection.value.set(...mood.backPosition).normalize();
-  uniforms.uBackColor.value.set(mood.backColor).multiplyScalar(mood.backIntensity);
-  uniforms.uSkyColor.value.set(mood.skyColor);
-  uniforms.uGroundColor.value.set(mood.groundColor);
+  uniforms.uBackColor.value.set(mood.backColor).multiplyScalar(mood.backIntensity * mood.exposure);
+  uniforms.uSkyColor.value.set(mood.skyColor).multiplyScalar(mood.exposure);
+  uniforms.uGroundColor.value.set(mood.groundColor).multiplyScalar(mood.exposure);
   uniforms.uRimColor.value.set(mood.rimColor);
 }

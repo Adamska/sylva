@@ -6,12 +6,14 @@ uniform vec3 uSkyColor;
 uniform vec3 uGroundColor;
 uniform vec3 uRimColor;
 
+const float DIFFUSE_SCALE = 0.31830989;
+
 vec3 hemisphereLight(vec3 normal) {
   return mix(uGroundColor, uSkyColor, normal.y * 0.5 + 0.5);
 }
 
 float wrappedDiffuse(vec3 normal, vec3 lightDirection, float wrap) {
-  return max((dot(normal, lightDirection) + wrap) / (1.0 + wrap), 0.0);
+  return DIFFUSE_SCALE * max((dot(normal, lightDirection) + wrap) / (1.0 + wrap), 0.0);
 }
 
 float fresnelTerm(vec3 normal, vec3 viewDirection, float power) {

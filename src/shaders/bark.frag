@@ -87,15 +87,15 @@ void main() {
 
   vec3 halfVector = normalize(uKeyDirection + viewDirection);
   float sheen = pow(max(dot(normal, halfVector), 0.0), 28.0) * mix(0.22, 0.06, age);
-  color += uKeyColor * sheen * cavity;
+  color += uKeyColor * sheen * cavity * DIFFUSE_SCALE;
 
   float rim = fresnelTerm(normal, viewDirection, 3.0);
-  float backFacing = wrappedDiffuse(geometricNormal, uBackDirection, 0.6);
-  color += uRimColor * rim * (0.25 + 0.75 * backFacing) * 0.55;
+  float backFacing = wrappedDiffuse(geometricNormal, uBackDirection, 0.6) / DIFFUSE_SCALE;
+  color += uRimColor * rim * (0.2 + 0.8 * backFacing) * 0.3;
 
   float sapPulse = smoothstep(0.6, 1.0, sin(vUv.y * 3.2 - uTime * 1.5) * 0.5 + 0.5);
   float sapVeins = smoothstep(0.35, 0.05, relief.y);
-  float sap = sapVeins * (0.3 + 1.6 * sapPulse) + rim * 0.5;
+  float sap = sapVeins * (0.5 + 2.4 * sapPulse) + rim * 0.6;
   color += uGlowColor * uGlow * sap * mix(0.35, 1.0, vBranchFactor);
 
   gl_FragColor = vec4(color, 1.0);

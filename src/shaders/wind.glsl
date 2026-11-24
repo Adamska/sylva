@@ -3,6 +3,7 @@ uniform float uWindStrength;
 uniform float uTurbulence;
 uniform vec2 uWindDirection;
 uniform float uSpecimenHeight;
+uniform float uGrowth;
 
 vec3 windOffset(vec3 point, float flex) {
   float heightRatio = clamp(point.y / uSpecimenHeight, 0.0, 1.0);
