@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-obsidian: #07080a;
+  --color-basalt: #101216;
+  --color-bone: #ece6da;
+  --color-lichen: #9aa08f;
+  --color-brass: #d9b676;
+  --color-hairline: rgba(255, 255, 255, 0.1);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-obsidian);
+  color: var(--color-bone);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(217, 182, 118, 0.35);
+}

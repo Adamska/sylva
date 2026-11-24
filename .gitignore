@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+dist
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.env
+.env*.local
+npm-debug.log*
+
+CLAUDE.md
+.claude/
+.cursorrules
+AGENTS.md
