@@ -27,6 +27,7 @@ export function CameraRig() {
   const stats = useBotanyStore((state) => state.stats);
   const grove = useBotanyStore((state) => state.grove);
   const growthCycle = useBotanyStore((state) => state.growthCycle);
+  const presenting = useBotanyStore((state) => state.presenting);
   const goal = useRef({ distance: 0, height: 2, framed: 0, cycle: -1, active: false });
 
   useEffect(() => {
@@ -45,12 +46,12 @@ export function CameraRig() {
 
   useEffect(() => {
     if (!(camera instanceof PerspectiveCamera)) return;
-    const shift = size.width >= INSPECTOR_BREAKPOINT ? INSPECTOR_SHIFT : 0;
+    const shift = size.width >= INSPECTOR_BREAKPOINT && !presenting ? INSPECTOR_SHIFT : 0;
     const fitted = MathUtils.radToDeg(2 * Math.atan(HORIZONTAL_HALF_TANGENT / (size.width / size.height)));
     camera.fov = MathUtils.clamp(fitted, BASE_FOV, MAX_FOV);
     camera.setViewOffset(size.width, size.height, shift, 0, size.width, size.height);
     return () => camera.clearViewOffset();
-  }, [camera, size]);
+  }, [camera, size, presenting]);
 
   useEffect(() => {
     if (!stats || !(camera instanceof PerspectiveCamera)) return;

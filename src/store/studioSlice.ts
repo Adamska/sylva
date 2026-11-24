@@ -35,6 +35,8 @@ export interface StudioSlice {
   autoRotate: boolean;
   grove: boolean;
   presenting: boolean;
+  evolving: boolean;
+  paletteOpen: boolean;
   highlightRule: number | null;
   stats: SpecimenStats | null;
   activity: Activity | null;
@@ -45,6 +47,8 @@ export interface StudioSlice {
   toggleAutoRotate: () => void;
   toggleGrove: () => void;
   setPresenting: (presenting: boolean) => void;
+  setEvolving: (evolving: boolean) => void;
+  setPaletteOpen: (paletteOpen: boolean) => void;
   setHighlightRule: (rule: number | null) => void;
   reportStats: (stats: SpecimenStats) => void;
   setActivity: (activity: Activity | null) => void;
@@ -61,6 +65,8 @@ export const createStudioSlice: StateCreator<BotanyState, [], [], StudioSlice> =
   autoRotate: true,
   grove: false,
   presenting: false,
+  evolving: false,
+  paletteOpen: false,
   highlightRule: null,
   stats: null,
   activity: null,
@@ -71,7 +77,9 @@ export const createStudioSlice: StateCreator<BotanyState, [], [], StudioSlice> =
   setLife: (patch) => set((state) => ({ life: { ...state.life, ...patch } })),
   toggleAutoRotate: () => set((state) => ({ autoRotate: !state.autoRotate })),
   toggleGrove: () => set((state) => ({ grove: !state.grove })),
-  setPresenting: (presenting) => set({ presenting }),
+  setPresenting: (presenting) => set({ presenting, evolving: false, paletteOpen: false }),
+  setEvolving: (evolving) => set({ evolving }),
+  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setHighlightRule: (highlightRule) => set({ highlightRule }),
   reportStats: (stats) => set({ stats }),
   setActivity: (activity) => set({ activity }),
