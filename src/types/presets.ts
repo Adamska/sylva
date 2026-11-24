@@ -7,6 +7,39 @@ export interface SpeciesPreset {
 
 export const SPECIES_PRESETS: readonly SpeciesPreset[] = [
   {
+    id: 'mountain-cherry',
+    species: {
+      name: 'Mountain Cherry',
+      latin: 'Prunus serrulata',
+      grammar: {
+        axiom: 'F(2.6)/(25)F(1.5)[&(38)X]/(125)[&(46)X]/(112)[&(34)X]/(133)[&(50)X]',
+        rules: [
+          { symbol: 'X', successor: 'FF[\\(50)&(40)Y]/(137.5)[&(32)Y]/(105)[&(12)Y]' },
+          { symbol: 'Y', successor: 'FF[\\(60)&(44)Z]/(137.5)[&(36)Z]/(110)[&(14)Z]' },
+          { symbol: 'Z', successor: 'F[&(52)W]/(137.5)F[&(44)W]/(137.5)F[&(38)W]/(137.5)[&(16)W]' },
+          { symbol: 'W', successor: 'F(0.45)K/(137.5)+(14)F(0.45)KL/(137.5)-(10)W' },
+        ],
+        iterations: 7,
+        angleDeg: 30,
+        stepLength: 0.3,
+        radiusScale: 0.66,
+        tropismGravity: 0.1,
+      },
+      form: { trunkRadius: 0.17, lengthDecay: 0.9, angleJitter: 0.36, leafShape: 'ovate', leafSize: 0.12, organShape: 'blossom', organSize: 0.14 },
+      palette: {
+        barkDark: '#221616',
+        barkLight: '#6d4d47',
+        leafDeep: '#3f5a2a',
+        leafBright: '#a9c56a',
+        subsurface: '#ffd9a8',
+        organ: '#ffc4d6',
+        glow: 0,
+      },
+      mood: 'dawn',
+      seed: 2026,
+    },
+  },
+  {
     id: 'weeping-willow',
     species: {
       name: 'Weeping Willow',
@@ -132,39 +165,6 @@ export const SPECIES_PRESETS: readonly SpeciesPreset[] = [
       },
       mood: 'abyssal',
       seed: 90210,
-    },
-  },
-  {
-    id: 'mountain-cherry',
-    species: {
-      name: 'Mountain Cherry',
-      latin: 'Prunus serrulata',
-      grammar: {
-        axiom: 'F(2.6)/(25)F(1.5)[&(38)X]/(125)[&(46)X]/(112)[&(34)X]/(133)[&(50)X]',
-        rules: [
-          { symbol: 'X', successor: 'FF[\\(50)&(40)Y]/(137.5)[&(32)Y]/(105)[&(12)Y]' },
-          { symbol: 'Y', successor: 'FF[\\(60)&(44)Z]/(137.5)[&(36)Z]/(110)[&(14)Z]' },
-          { symbol: 'Z', successor: 'F[&(52)W]/(137.5)F[&(44)W]/(137.5)F[&(38)W]/(137.5)[&(16)W]' },
-          { symbol: 'W', successor: 'F(0.45)K/(137.5)+(14)F(0.45)KL/(137.5)-(10)W' },
-        ],
-        iterations: 7,
-        angleDeg: 30,
-        stepLength: 0.3,
-        radiusScale: 0.66,
-        tropismGravity: 0.1,
-      },
-      form: { trunkRadius: 0.17, lengthDecay: 0.9, angleJitter: 0.36, leafShape: 'ovate', leafSize: 0.12, organShape: 'blossom', organSize: 0.14 },
-      palette: {
-        barkDark: '#221616',
-        barkLight: '#6d4d47',
-        leafDeep: '#3f5a2a',
-        leafBright: '#a9c56a',
-        subsurface: '#ffd9a8',
-        organ: '#ffc4d6',
-        glow: 0,
-      },
-      mood: 'dawn',
-      seed: 2026,
     },
   },
 ];

@@ -2,11 +2,11 @@
 
 Sylva is an interactive atelier for growing plants from formal grammars. A bracketed L-system is expanded, walked by a 3D turtle, skinned into two batched meshes, and lit by custom GLSL wind and subsurface-scattering shaders on a gallery plinth. Describe a species in plain language to get a new grammar, breed it by eye, tune it live, then export a model, a video or a printed plate.
 
-![Weeping Willow under golden-hour light](docs/screenshots/weeping-willow.jpg)
+![Mountain Cherry in blossom under dawn light](docs/screenshots/mountain-cherry.jpg)
 
-| Alpine Pine | Desert Agave | Bioluminescent Coral Tree | Mountain Cherry |
+| Weeping Willow | Alpine Pine | Desert Agave | Bioluminescent Coral Tree |
 | --- | --- | --- | --- |
-| ![Alpine Pine](docs/screenshots/alpine-pine.jpg) | ![Desert Agave](docs/screenshots/desert-agave.jpg) | ![Bioluminescent Coral Tree](docs/screenshots/coral-tree.jpg) | ![Mountain Cherry](docs/screenshots/mountain-cherry.jpg) |
+| ![Weeping Willow](docs/screenshots/weeping-willow.jpg) | ![Alpine Pine](docs/screenshots/alpine-pine.jpg) | ![Desert Agave](docs/screenshots/desert-agave.jpg) | ![Bioluminescent Coral Tree](docs/screenshots/coral-tree.jpg) |
 
 | Evolve by eye | Trace a rule into the scene | Botanical plate |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. The Weeping Willow grows on load.
+Open `http://localhost:3000`. The Mountain Cherry grows on load.
 
 | Script | Purpose |
 | --- | --- |

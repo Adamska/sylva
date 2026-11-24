@@ -7,7 +7,7 @@ export interface Archetype {
   template: Omit<Species, 'name' | 'latin' | 'seed'>;
 }
 
-const [willow, pine, agave, coral, cherry] = SPECIES_PRESETS.map((preset) => preset.species);
+const [cherry, willow, pine, agave, coral] = SPECIES_PRESETS.map((preset) => preset.species);
 const fromPreset = ({ grammar, form, palette, mood }: Species): Archetype['template'] => ({ grammar, form, palette, mood });
 
 const leafGreens = { leafDeep: '#2c5a26', leafBright: '#93c552', subsurface: '#dfe45a', organ: '#f3d2dc', glow: 0 };

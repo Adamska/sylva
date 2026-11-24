@@ -61,7 +61,7 @@ let toastTimer: ReturnType<typeof setTimeout> | undefined;
 export const createStudioSlice: StateCreator<BotanyState, [], [], StudioSlice> = (set) => ({
   wind: { strength: 0.55, speed: 1, turbulence: 1, headingDeg: 35 },
   shading: { translucency: 1, barkRelief: 1, flutter: 1, bloom: 0.6, haze: 0.6, depthOfField: 0 },
-  life: { age: 1, season: 0.3 },
+  life: { age: 1, season: 0.27 },
   autoRotate: true,
   grove: false,
   presenting: false,
