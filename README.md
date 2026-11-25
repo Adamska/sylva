@@ -39,21 +39,21 @@ OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-5-mini
 ```
 
-`OPENAI_MODEL` is optional. Without a key, or whenever the model call fails, the route falls back to the deterministic procedural generator, so the same description always grows the same plant.
+`OPENAI_MODEL` is optional, and `OPENAI_KEY` is accepted as an alias for the key. Without a key, or whenever the model call fails, the route falls back to the deterministic procedural generator, so the same description always grows the same plant.
 
 ## Using the atelier
 
 ### Finding a plant
 
 - **Herbarium.** The shelf at the top of the inspector shows the five built-in species as rendered thumbnails. **Save** adds the current specimen to your own collection, which is kept in the browser.
-- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`, or name a flower: `pink tulips at dawn`, `giant sunflower at sunset`, `wild red poppies`. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history.
+- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`, or name a flower: `pink tulips at dawn`, `giant sunflower at sunset`, `wild red poppies`. Descriptions can be written in English or French (`tulipe noire`, `vieux chêne tordu`), and near misses such as `crysanthemes` are still recognised. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history.
 - **Evolve.** Six rendered variants of the current specimen appear with a short description of how each differs. Pick one and it becomes the parent of the next six. This explores a species without reading a single rule.
 - **Refine.** The chips above the species bar nudge the current plant: more weeping, denser, taller, wilder and so on.
 
 ### Shaping it
 
 - **Grammar.** The axiom and rules are multi-line, colour-coded fields. Unbalanced brackets are flagged as you type, and **Alphabet** opens a legend. Hover or focus a rule and the growth it produced lights up in the scene while the rest dims.
-- **Form.** Trunk radius, length decay, angular jitter, leaf shape and size, and the flower or fruit drawn by `K`: blossom, daisy, sunflower, tulip, rose, lily, bell, poppy, pompom or berry. Stems thinner than a trunk stay smooth and green.
+- **Form.** Trunk radius, length decay, angular jitter, leaf shape and size (lance, needle, sword, ovate, polyp, lobed, round or palmate), and the flower or fruit drawn by `K`: blossom, daisy, sunflower, tulip, rose, lily, bell, poppy, pompom, mum, trumpet, star, orchid, calla or berry. Stems thinner than a trunk stay smooth and green, and leaves that would poke into a flower head are shortened.
 - **Life.** **Age** scrubs the plant from seed to maturity. **Season** runs from spring buds through summer to autumn colour, falling leaves and bare winter wood. Blossoms appear in spring, flowers last into late summer and fruit follows.
 - **Palette.** Seven colour swatches, including the petals and the heart of the flower, plus bioluminescence.
 - **Wind** and **Stage.** Strength, tempo, turbulence and heading; lighting mood, leaf translucency, bark relief, bloom, haze and depth of field. **Grove** grows four siblings from other seeds to show natural variation.
@@ -195,7 +195,7 @@ Light directions and colours come from the selected mood in `src/scene/moods.ts`
 { "species": { "name": "...", "latin": "...", "grammar": {}, "form": {}, "palette": {}, "mood": "abyssal", "seed": 0 }, "source": "procedural" }
 ```
 
-`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator first looks for a flower name: about eighty, from tulip and sunflower to foxglove and lily of the valley, each map to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours, and a colour word then repaints the petals instead of the leaves. Other descriptions are matched against ten plant archetypes. Either way it reads colour, mood, stature and density words and perturbs branching angles from a hash of the text.
+`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator reads English and French, folds accents and plurals, and tolerates small typos. It first looks for a name in two catalogues: about 160 flower names, from tulip and chrysanthème to foxglove and lily of the valley, each mapped to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours; and about 200 tree and shrub words covering broadleaves, conifers, fruit and flowering trees, palms, cacti and more, built on seventeen habits. A colour word repaints the petals of a named flower instead of its leaves, and a flower named together with a tree grows on that tree. It then reads colour, mood, stature and density words and perturbs branching angles from a hash of the text. When a language model is configured, the matched specimen is sent along as a reference to adapt.
 
 ## Project layout
 
@@ -211,12 +211,16 @@ src/
     barkBuilder.ts     Batched bark mesh
     leafBuilder.ts     Leaf placement and foliage budgets
     organBuilder.ts    Flower and berry construction from flowerProfiles.ts
+    leafRoom.ts        Clearance that keeps leaves out of flower heads
     foliageWriter.ts   Blade vertex writer, with orbWriter.ts for discs and berries
     meshBuilder.ts     Build orchestration and statistics
     specimen.worker.ts Worker entry, with buildClient.ts as its caller
     mutation.ts        Variant breeding for Evolve
     grammarSynth.ts    Deterministic description-to-species generator
-    flowerArchetypes.ts  Flower names, habits and colours for the generator
+    flowerCatalog.ts   Flower names with their habit, shape and colours (herbHabits.ts)
+    treeCatalog.ts     Tree and shrub names with their habit and overrides (treeHabits.ts)
+    wordMatch.ts       Accent folding, plurals and typo-tolerant keyword matching
+    descriptors.ts     Colour, mood, stature and density words in English and French
     speciesNormalizer.ts  Repair and clamping of untrusted grammars
     exportScene.ts     Baked export meshes shared by glbExporter.ts and usdzExporter.ts
   scene/               Canvas, specimen, grove, camera rig, atmosphere, stage and materials
