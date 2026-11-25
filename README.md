@@ -46,16 +46,16 @@ OPENAI_MODEL=gpt-5-mini
 ### Finding a plant
 
 - **Herbarium.** The shelf at the top of the inspector shows the five built-in species as rendered thumbnails. **Save** adds the current specimen to your own collection, which is kept in the browser.
-- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history.
+- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`, or name a flower: `pink tulips at dawn`, `giant sunflower at sunset`, `wild red poppies`. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history.
 - **Evolve.** Six rendered variants of the current specimen appear with a short description of how each differs. Pick one and it becomes the parent of the next six. This explores a species without reading a single rule.
 - **Refine.** The chips above the species bar nudge the current plant: more weeping, denser, taller, wilder and so on.
 
 ### Shaping it
 
 - **Grammar.** The axiom and rules are multi-line, colour-coded fields. Unbalanced brackets are flagged as you type, and **Alphabet** opens a legend. Hover or focus a rule and the growth it produced lights up in the scene while the rest dims.
-- **Form.** Trunk radius, length decay, angular jitter, leaf shape and size, and the flower or fruit drawn by `K`.
-- **Life.** **Age** scrubs the plant from seed to maturity. **Season** runs from spring buds through summer to autumn colour, falling leaves and bare winter wood. Blossoms appear in spring and fruit follows.
-- **Palette.** Six colour swatches plus bioluminescence.
+- **Form.** Trunk radius, length decay, angular jitter, leaf shape and size, and the flower or fruit drawn by `K`: blossom, daisy, sunflower, tulip, rose, lily, bell, poppy, pompom or berry. Stems thinner than a trunk stay smooth and green.
+- **Life.** **Age** scrubs the plant from seed to maturity. **Season** runs from spring buds through summer to autumn colour, falling leaves and bare winter wood. Blossoms appear in spring, flowers last into late summer and fruit follows.
+- **Palette.** Seven colour swatches, including the petals and the heart of the flower, plus bioluminescence.
 - **Wind** and **Stage.** Strength, tempo, turbulence and heading; lighting mood, leaf translucency, bark relief, bloom, haze and depth of field. **Grove** grows four siblings from other seeds to show natural variation.
 
 Every change to the species is undoable. **Link** copies a URL that carries the whole species.
@@ -106,7 +106,7 @@ A grammar is an axiom plus up to eight production rules. On each iteration every
 | `\|` | Turn around |
 | `[` `]` | Push and pop the turtle state to start and finish a branch |
 | `L` | Attach a leaf cluster |
-| `K` | Attach a flower or a fruit, depending on the species |
+| `K` | Attach a flower or a fruit, depending on the species. Flowers open along the heading |
 | other letters | Growth buds that only matter through their rules |
 
 Any symbol may carry a numeric argument in parentheses. `F(1.5)` scales that step by 1.5, `+(35)` and `/(137.5)` rotate by an explicit number of degrees instead of the default branch angle, and `L(0.6)` scales a leaf. When a symbol with an argument is rewritten, the whole module is replaced.
@@ -155,7 +155,7 @@ Custom and generated grammars cannot stall the browser. Expansion stops before a
 Meshes are built in a web worker and transferred to the main thread, so the interface stays responsive while a grammar grows. The whole specimen is two draw calls, plus two more in the shadow pass.
 
 - **Bark** is one indexed geometry. Consecutive segments share rings, the reference frame is parallel-transported along each limb to avoid twist, side counts fall from twelve on the trunk to five on twigs (fewer at reduced detail levels), and tips are capped. Attributes: `position`, `normal`, `uv`, `aBranchFactor` (0 at the root to 1 at flexible tips), `aBarkRoughness` and `aRule`.
-- **Foliage** is one indexed geometry of curved, folded blades, five-petalled blossoms and berries. Attributes: `position`, `normal`, `uv`, `aAnchor` (attachment point), `aAxis` (the hinge axis: the blade direction, or the flower axis for petals), `aSway` (flutter weight, rising from the base of a blade to its tip), `aPhase`, `aBranchFactor`, `aShade` (canopy depth), `aRule` and `aOrgan`.
+- **Foliage** is one indexed geometry of curved, folded blades, flowers built from whorls of curling petals around an optional disc, and berries. Attributes: `position`, `normal`, `uv`, `aAnchor` (attachment point), `aAxis` (the hinge axis: the blade direction, or the flower axis for petals), `aSway` (flutter weight, rising from the base of a blade to its tip), `aPhase`, `aBranchFactor`, `aShade` (canopy depth), `aRule` and `aOrgan` (leaf, petal, stamen or flower heart).
 
 ### Shaders
 
@@ -195,7 +195,7 @@ Light directions and colours come from the selected mood in `src/scene/moods.ts`
 { "species": { "name": "...", "latin": "...", "grammar": {}, "form": {}, "palette": {}, "mood": "abyssal", "seed": 0 }, "source": "procedural" }
 ```
 
-`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator matches the description against ten plant archetypes, reads colour, mood, stature and density words, and perturbs branching angles from a hash of the text.
+`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator first looks for a flower name: about eighty, from tulip and sunflower to foxglove and lily of the valley, each map to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours, and a colour word then repaints the petals instead of the leaves. Other descriptions are matched against ten plant archetypes. Either way it reads colour, mood, stature and density words and perturbs branching angles from a hash of the text.
 
 ## Project layout
 
@@ -209,12 +209,14 @@ src/
     turtle.ts          3D turtle interpretation into a skeleton
     limbMetrics.ts     Pipe-model radii, flexibility and path lengths
     barkBuilder.ts     Batched bark mesh
-    leafBuilder.ts     Leaf, blossom and berry placement
-    foliageWriter.ts   Blade and berry vertex writer
+    leafBuilder.ts     Leaf placement and foliage budgets
+    organBuilder.ts    Flower and berry construction from flowerProfiles.ts
+    foliageWriter.ts   Blade vertex writer, with orbWriter.ts for discs and berries
     meshBuilder.ts     Build orchestration and statistics
     specimen.worker.ts Worker entry, with buildClient.ts as its caller
     mutation.ts        Variant breeding for Evolve
     grammarSynth.ts    Deterministic description-to-species generator
+    flowerArchetypes.ts  Flower names, habits and colours for the generator
     speciesNormalizer.ts  Repair and clamping of untrusted grammars
     exportScene.ts     Baked export meshes shared by glbExporter.ts and usdzExporter.ts
   scene/               Canvas, specimen, grove, camera rig, atmosphere, stage and materials
