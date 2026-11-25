@@ -4,7 +4,7 @@ Sylva is an interactive atelier for growing plants from formal grammars. A brack
 
 **Live demo:** [sylva-zeta-tan.vercel.app](https://sylva-zeta-tan.vercel.app)
 
-![Mountain Cherry in blossom under dawn light](https://github.com/user-attachments/assets/86bbc560-2f40-4950-81c6-d17302fe4932)
+![Mountain Cherry in blossom under dawn light](https://github.com/user-attachments/assets/cad8ab3e-b953-427f-ae17-f72c454a1c1a)
 
 | Weeping Willow | Alpine Pine | Desert Agave | Bioluminescent Coral Tree |
 | --- | --- | --- | --- |
