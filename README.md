@@ -32,14 +32,17 @@ Open `http://localhost:3000`. The Mountain Cherry grows on load.
 
 ### Language model (optional)
 
-The species prompt works without any credentials. To have a language model write the grammar, add a `.env.local` file:
+The species prompt works without any credentials. To have a language model write the grammar, add a `.env.local` file with a Google Gemini key or an OpenAI key:
 
 ```bash
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-flash-latest
+
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-5-mini
 ```
 
-`OPENAI_MODEL` is optional, and `OPENAI_KEY` is accepted as an alias for the key. Without a key, or whenever the model call fails, the route falls back to the deterministic procedural generator, so the same description always grows the same plant.
+One key is enough and the model names are optional. Gemini is used when its key is present, otherwise OpenAI; `GOOGLE_GENERATIVE_AI_API_KEY` and `OPENAI_KEY` are accepted as aliases. Without a key, or whenever the model call fails, the route falls back to the deterministic procedural generator, so the same description always grows the same plant.
 
 ## Using the atelier
 
@@ -195,7 +198,7 @@ Light directions and colours come from the selected mood in `src/scene/moods.ts`
 { "species": { "name": "...", "latin": "...", "grammar": {}, "form": {}, "palette": {}, "mood": "abyssal", "seed": 0 }, "source": "procedural" }
 ```
 
-`source` is `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator reads English and French, folds accents and plurals, and tolerates small typos. It first looks for a name in two catalogues: about 160 flower names, from tulip and chrysanthème to foxglove and lily of the valley, each mapped to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours; and about 200 tree and shrub words covering broadleaves, conifers, fruit and flowering trees, palms, cacti and more, built on seventeen habits. A colour word repaints the petals of a named flower instead of its leaves, and a flower named together with a tree grows on that tree. It then reads colour, mood, stature and density words and perturbs branching angles from a hash of the text. When a language model is configured, the matched specimen is sent along as a reference to adapt.
+`source` is `gemini`, `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator reads English and French, folds accents and plurals, and tolerates small typos. It first looks for a name in two catalogues: about 160 flower names, from tulip and chrysanthème to foxglove and lily of the valley, each mapped to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours; and about 200 tree and shrub words covering broadleaves, conifers, fruit and flowering trees, palms, cacti and more, built on seventeen habits. A colour word repaints the petals of a named flower instead of its leaves, and a flower named together with a tree grows on that tree. It then reads colour, mood, stature and density words and perturbs branching angles from a hash of the text. When a language model is configured, the matched specimen is sent along as a reference to adapt.
 
 ## Project layout
 
@@ -232,7 +235,7 @@ src/
 
 ## Stack
 
-Next.js 16 with the App Router and React 19, TypeScript in strict mode, Three.js through React Three Fiber, Drei and the post-processing bindings, `three-stdlib` for glTF export, Tailwind CSS 4, Zustand, Zod, and the Vercel AI SDK with the OpenAI provider. The canvas is loaded client-side only.
+Next.js 16 with the App Router and React 19, TypeScript in strict mode, Three.js through React Three Fiber, Drei and the post-processing bindings, `three-stdlib` for glTF export, Tailwind CSS 4, Zustand, Zod, and the Vercel AI SDK with the Google and OpenAI providers. The canvas is loaded client-side only.
 
 ## License
 
