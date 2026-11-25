@@ -1,15 +1,13 @@
-import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, Output } from 'ai';
 import { findReference, synthesizeSpecies } from '@/engine/grammarSynth';
 import { hashString } from '@/engine/random';
 import { normalizeSpecies } from '@/engine/speciesNormalizer';
 import { grammarRequestSchema, speciesDraftSchema, type GrammarResponse } from '@/types/grammarApi';
+import { resolveModel } from './languageModel';
 import { GRAMMAR_SYSTEM_PROMPT } from './systemPrompt';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
-
-const DEFAULT_MODEL = 'gpt-5-mini';
 
 function describe(prompt: string): string {
   const reference = findReference(prompt);
@@ -31,19 +29,20 @@ export async function POST(request: Request): Promise<Response> {
   }
   const { prompt } = parsed.data;
 
-  const apiKey = process.env.OPENAI_API_KEY ?? process.env.OPENAI_KEY;
-  if (!apiKey) return proceduralResponse(prompt);
+  const configured = resolveModel();
+  if (!configured) return proceduralResponse(prompt);
 
   try {
     const { output } = await generateText({
-      model: createOpenAI({ apiKey })(process.env.OPENAI_MODEL ?? DEFAULT_MODEL),
+      model: configured.model,
+      providerOptions: configured.providerOptions,
       output: Output.object({ schema: speciesDraftSchema }),
       instructions: GRAMMAR_SYSTEM_PROMPT,
       prompt: describe(prompt),
       maxRetries: 0,
       timeout: 25_000,
     });
-    const body: GrammarResponse = { species: normalizeSpecies(output, hashString(prompt.toLowerCase())), source: 'openai' };
+    const body: GrammarResponse = { species: normalizeSpecies(output, hashString(prompt.toLowerCase())), source: configured.source };
     return Response.json(body);
   } catch (error) {
     console.error('Grammar generation failed, falling back to procedural synthesis', error);

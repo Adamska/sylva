@@ -7,6 +7,7 @@ import { REFINEMENTS } from '@/studio/refinements';
 import { PROMPT_MAX_LENGTH } from '@/types/grammarApi';
 
 const SOURCE_LABELS = {
+  gemini: 'Grammar composed by the language model',
   openai: 'Grammar composed by the language model',
   procedural: 'Grammar grown by the procedural generator',
 } as const;
