@@ -11,7 +11,7 @@ const SOURCE_LABELS = {
   procedural: 'Grammar grown by the procedural generator',
 } as const;
 
-const SUGGESTIONS = ['crimson weeping cherry at midnight', 'towering glowing blue fir', 'windswept golden bamboo', 'frozen ghost birch'] as const;
+const SUGGESTIONS = ['giant sunflower at sunset', 'crimson weeping cherry at midnight', 'pink tulips at dawn', 'towering glowing blue fir', 'wild red poppies'] as const;
 const chipClass =
   'shrink-0 rounded-full border border-hairline bg-[#0b0c0f]/55 px-2.5 py-1 text-[10px] text-bone/80 backdrop-blur-md transition-colors hover:border-brass/50 hover:text-brass';
 
