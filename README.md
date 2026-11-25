@@ -2,6 +2,8 @@
 
 Sylva is an interactive atelier for growing plants from formal grammars. A bracketed L-system is expanded, walked by a 3D turtle, skinned into two batched meshes, and lit by custom GLSL wind and subsurface-scattering shaders on a gallery plinth. Describe a species in plain language to get a new grammar, breed it by eye, tune it live, then export a model, a video or a printed plate.
 
+**Live demo:** [sylva-zeta-tan.vercel.app](https://sylva-zeta-tan.vercel.app)
+
 ![Mountain Cherry in blossom under dawn light](docs/screenshots/mountain-cherry.jpg)
 
 | Weeping Willow | Alpine Pine | Desert Agave | Bioluminescent Coral Tree |
