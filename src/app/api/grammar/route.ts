@@ -1,6 +1,6 @@
-import { openai } from '@ai-sdk/openai';
+import { createOpenAI } from '@ai-sdk/openai';
 import { generateText, Output } from 'ai';
-import { synthesizeSpecies } from '@/engine/grammarSynth';
+import { findReference, synthesizeSpecies } from '@/engine/grammarSynth';
 import { hashString } from '@/engine/random';
 import { normalizeSpecies } from '@/engine/speciesNormalizer';
 import { grammarRequestSchema, speciesDraftSchema, type GrammarResponse } from '@/types/grammarApi';
@@ -10,6 +10,13 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 const DEFAULT_MODEL = 'gpt-5-mini';
+
+function describe(prompt: string): string {
+  const reference = findReference(prompt);
+  if (!reference) return prompt;
+  const { grammar, form, palette, mood } = reference;
+  return `${prompt}\n\nReference specimen for this kind of plant, to adapt to the description rather than copy:\n${JSON.stringify({ grammar, form, palette, mood })}`;
+}
 
 function proceduralResponse(prompt: string, notice?: string): Response {
   const body: GrammarResponse = { species: synthesizeSpecies(prompt), source: 'procedural', notice };
@@ -24,14 +31,16 @@ export async function POST(request: Request): Promise<Response> {
   }
   const { prompt } = parsed.data;
 
-  if (!process.env.OPENAI_API_KEY) return proceduralResponse(prompt);
+  const apiKey = process.env.OPENAI_API_KEY ?? process.env.OPENAI_KEY;
+  if (!apiKey) return proceduralResponse(prompt);
 
   try {
     const { output } = await generateText({
-      model: openai(process.env.OPENAI_MODEL ?? DEFAULT_MODEL),
+      model: createOpenAI({ apiKey })(process.env.OPENAI_MODEL ?? DEFAULT_MODEL),
       output: Output.object({ schema: speciesDraftSchema }),
       instructions: GRAMMAR_SYSTEM_PROMPT,
-      prompt,
+      prompt: describe(prompt),
+      maxRetries: 0,
       timeout: 25_000,
     });
     const body: GrammarResponse = { species: normalizeSpecies(output, hashString(prompt.toLowerCase())), source: 'openai' };

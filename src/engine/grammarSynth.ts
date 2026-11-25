@@ -1,82 +1,81 @@
-import { speciesSchema, type LightingMood, type Palette, type Species } from '@/types/botany';
-import { ARCHETYPES, DEFAULT_ARCHETYPE, type Archetype } from './archetypes';
-import { FLOWER_WORDS, FLOWERS, flowerArchetype, type Flower } from './flowerArchetypes';
+import { speciesSchema, type Palette, type Species } from '@/types/botany';
 import { hslToHex } from './colorOps';
+import {
+  DROOP_WORDS,
+  FLOWER_WORDS,
+  GLOW_WORDS,
+  GNARL_WORDS,
+  isTintWord,
+  LUSH_WORDS,
+  MOOD_WORDS,
+  SMALL_WORDS,
+  SPARSE_WORDS,
+  TALL_WORDS,
+  TINTS,
+  TREE_WORDS,
+  type Tint,
+} from './descriptors';
+import { FLOWERS } from './flowerCatalog';
 import { clampParameter as clamp, perturbAngles, vary } from './grammarOps';
 import { createRng, hashString, type Rng } from './random';
 import { fitIterations } from './speciesNormalizer';
+import { DEFAULT_TREE, FLOWERING_TREE, TREE_HINTS, TREES } from './treeCatalog';
+import { bearsOrgans, cultivate, type Archetype, type Variety } from './varieties';
+import { findMatches, findNearest, hasWord, readText, withoutWord, type Match, type Reading } from './wordMatch';
 
-interface Tint {
-  words: readonly string[];
-  hue: number;
-  saturation: number;
+interface Resolution {
+  archetype: Archetype;
+  word: string | null;
+  known: boolean;
 }
 
-const TINTS: readonly Tint[] = [
-  { words: ['red', 'crimson', 'scarlet', 'blood', 'ruby'], hue: 356, saturation: 0.72 },
-  { words: ['orange', 'amber', 'ember', 'fire', 'flame', 'autumn', 'rust'], hue: 26, saturation: 0.8 },
-  { words: ['gold', 'golden', 'yellow', 'honey', 'sun'], hue: 47, saturation: 0.78 },
-  { words: ['pink', 'blossom', 'sakura', 'cherry', 'rose'], hue: 334, saturation: 0.62 },
-  { words: ['purple', 'violet', 'amethyst', 'lilac', 'plum'], hue: 276, saturation: 0.55 },
-  { words: ['blue', 'azure', 'sapphire', 'cobalt', 'ice', 'frozen'], hue: 212, saturation: 0.62 },
-  { words: ['teal', 'cyan', 'turquoise', 'aqua', 'jade'], hue: 176, saturation: 0.6 },
-  { words: ['white', 'silver', 'snow', 'frost', 'ghost', 'pale', 'bone'], hue: 200, saturation: 0.08 },
-];
-
-const MOOD_WORDS: readonly (readonly [LightingMood, readonly string[]])[] = [
-  ['abyssal', ['glow', 'glowing', 'bioluminescent', 'neon', 'abyss', 'deep sea', 'alien', 'luminous', 'radioactive']],
-  ['moonlit', ['moon', 'night', 'lunar', 'midnight', 'frost', 'ghost', 'winter', 'ice']],
-  ['goldenHour', ['sunset', 'golden', 'autumn', 'dusk', 'savanna', 'ember', 'sun']],
-  ['dawn', ['dawn', 'sunrise', 'morning', 'spring', 'pastel', 'mist']],
-];
-
-const GLOW_WORDS = ['glow', 'glowing', 'bioluminescent', 'neon', 'luminous', 'radioactive', 'ember', 'fire', 'crystal', 'electric'];
+const AXIOM_LIMIT = 120;
 const EPITHET_STEMS = ['aur', 'luc', 'umbr', 'vir', 'sol', 'noct', 'arg', 'flamm', 'cael', 'sylv', 'vesper', 'ign'];
 const EPITHET_ENDINGS = ['ea', 'ata', 'ifera', 'escens', 'ina', 'osa', 'ensis', 'ella'];
 
-const isPhrase = (word: string) => /[^a-z]/.test(word);
-
-function hasWord(text: string, words: readonly string[]): boolean {
-  const tokens = text.split(/[^a-z]+/).flatMap((token) => [token, token.replace(/s$/, ''), token.replace(/es$/, ''), token.replace(/ies$/, 'y')]);
-  const singular = text.split(/[^a-z]+/).map((token) => token.replace(/ies$/, 'y').replace(/s$/, '')).join(' ');
-  return words.some((word) => (isPhrase(word) ? text.includes(word) || singular.includes(word) : tokens.includes(word)));
-}
-
-function findFlower(text: string): { flower: Flower; word: string } | null {
-  let best: { flower: Flower; word: string } | null = null;
-  for (const flower of FLOWERS) {
-    for (const word of flower.words) {
-      if (hasWord(text, [word]) && word.length > (best?.word.length ?? 0)) best = { flower, word };
-    }
-  }
-  return best;
-}
-
-function tintPetals(palette: Palette, tint: Tint, glow: number): Palette {
-  const pale = tint.saturation < 0.2;
-  return { ...palette, organ: hslToHex(tint.hue, pale ? 0.2 : Math.min(1, tint.saturation + 0.14), pale ? 0.94 : 0.6), glow };
-}
-
 function tintPalette(palette: Palette, tint: Tint, glow: number): Palette {
+  const shade = tint.shade ?? 1;
   return {
     ...palette,
-    leafDeep: hslToHex(tint.hue, tint.saturation * 0.85, 0.26),
-    leafBright: hslToHex(tint.hue + 8, tint.saturation, 0.62),
-    subsurface: hslToHex(tint.hue + 22, Math.min(1, tint.saturation + 0.2), 0.66),
-    organ: hslToHex(tint.hue - 12, Math.min(1, tint.saturation + 0.1), 0.78),
+    leafDeep: hslToHex(tint.hue, tint.saturation * 0.85, 0.26 * shade),
+    leafBright: hslToHex(tint.hue + 8, tint.saturation, 0.62 * shade),
+    subsurface: hslToHex(tint.hue + 22, Math.min(1, tint.saturation + 0.2), 0.66 * shade),
+    organ: hslToHex(tint.hue - 12, Math.min(1, tint.saturation + 0.1), 0.78 * shade),
     glow,
   };
 }
 
-function pickArchetype(text: string, rng: Rng, named: Flower | undefined): Archetype {
-  const cherry = ARCHETYPES[0];
-  if (named) return hasWord(text, ['tree']) ? flowerArchetype(named, cherry.template) : flowerArchetype(named);
-  const match = ARCHETYPES.find((archetype) => hasWord(text, archetype.keywords));
-  if (match) return match;
-  if (hasWord(text, DEFAULT_ARCHETYPE.keywords)) return DEFAULT_ARCHETYPE;
-  if (hasWord(text, FLOWER_WORDS)) return flowerArchetype(FLOWERS[Math.floor(rng() * FLOWERS.length)]);
-  const pool = [DEFAULT_ARCHETYPE, ...ARCHETYPES];
-  return pool[Math.floor(rng() * pool.length)];
+function tintPetals(palette: Palette, tint: Tint, glow: number): Palette {
+  const pale = tint.saturation < 0.2;
+  return { ...palette, organ: hslToHex(tint.hue, pale ? 0.2 : Math.min(1, tint.saturation + 0.14), (pale ? 0.94 : 0.6) * (tint.shade ?? 1)), glow };
+}
+
+function strongest(matches: Match<Variety>[]): Match<Variety> | undefined {
+  const weight = (match: Match<Variety>) => (isTintWord(match.word) ? 0 : 100) + match.word.length;
+  return matches.sort((a, b) => weight(b) - weight(a))[0];
+}
+
+function resolve(reading: Reading, rng: Rng): Resolution {
+  const flower = strongest(findMatches(reading, FLOWERS));
+  const tree = strongest(findMatches(reading, TREES));
+  const wantsTree = hasWord(reading, TREE_WORDS);
+
+  const overruled = tree !== undefined && flower !== undefined && (isTintWord(flower.word) || tree.word.includes(flower.word));
+  if (flower && !overruled) {
+    const host = tree ? cultivate(tree.entry).template : wantsTree ? FLOWERING_TREE.base : undefined;
+    const carrier = host && !bearsOrgans(host) ? FLOWERING_TREE.base : host;
+    return { archetype: cultivate(flower.entry, carrier), word: flower.word, known: true };
+  }
+  if (tree) return { archetype: cultivate(tree.entry), word: tree.word, known: true };
+  const hinted = strongest(findMatches(reading, TREE_HINTS));
+  if (hinted) return { archetype: cultivate(hinted.entry), word: null, known: true };
+  if (wantsTree) return { archetype: cultivate(hasWord(reading, FLOWER_WORDS) ? FLOWERING_TREE : DEFAULT_TREE), word: null, known: true };
+  if (hasWord(reading, FLOWER_WORDS)) return { archetype: cultivate(FLOWERS[Math.floor(rng() * FLOWERS.length)]), word: null, known: false };
+
+  const near = findNearest(reading, FLOWERS) ?? findNearest(reading, TREES);
+  if (near) return { archetype: cultivate(near.entry), word: near.word, known: true };
+  const pool = [...TREES, ...FLOWERS];
+  return { archetype: cultivate(pool[Math.floor(rng() * pool.length)]), word: null, known: false };
 }
 
 function titleCase(text: string): string {
@@ -88,25 +87,26 @@ function titleCase(text: string): string {
     .slice(0, 48);
 }
 
-export function synthesizeSpecies(prompt: string): Species {
+function synthesize(prompt: string): { species: Species; known: boolean } {
   const text = prompt.trim().toLowerCase();
   const seed = hashString(text);
   const rng = createRng(seed);
-  const named = findFlower(text);
-  const archetype = pickArchetype(text, rng, named?.flower);
-  const hues = named ? text.replace(named.word, ' ') : text;
+  const reading = readText(text);
+  const { archetype, word, known } = resolve(reading, rng);
   const { grammar, form, palette, mood } = archetype.template;
+  const hues = word ? withoutWord(reading, word) : reading;
 
-  const stature = hasWord(text, ['giant', 'towering', 'tall', 'ancient', 'colossal']) ? 1.18 : hasWord(text, ['dwarf', 'bonsai', 'tiny', 'small', 'miniature']) ? 0.72 : 1;
-  const lushness = hasWord(text, ['lush', 'dense', 'bushy', 'thick']) ? 1 : hasWord(text, ['sparse', 'bare', 'skeletal', 'dead']) ? -1 : 0;
-  const droop = hasWord(text, ['weeping', 'drooping', 'wilting', 'melting']) ? 0.35 : 0;
-  const gnarl = hasWord(text, ['twisted', 'gnarled', 'wild', 'chaotic', 'windswept']) ? 0.2 : 0;
-  const glow = hasWord(text, GLOW_WORDS) ? 0.55 + 0.4 * rng() : palette.glow;
+  const stature = hasWord(reading, TALL_WORDS) ? 1.18 : hasWord(reading, SMALL_WORDS) ? 0.72 : 1;
+  const lushness = hasWord(reading, LUSH_WORDS) ? 1 : hasWord(reading, SPARSE_WORDS) ? -1 : 0;
+  const droop = hasWord(reading, DROOP_WORDS) ? 0.35 : 0;
+  const gnarl = hasWord(reading, GNARL_WORDS) ? 0.2 : 0;
+  const glow = hasWord(reading, GLOW_WORDS) ? 0.55 + 0.4 * rng() : palette.glow;
   const tint = TINTS.find((candidate) => hasWord(hues, candidate.words));
-  const recolor = archetype.blooming ? tintPetals : tintPalette;
+  const recolor = archetype.petalsOnly ? tintPetals : tintPalette;
+  const swayed = perturbAngles(grammar.axiom, rng, 0.14);
 
   const tuned = {
-    axiom: perturbAngles(grammar.axiom, rng, 0.14),
+    axiom: swayed.length <= AXIOM_LIMIT ? swayed : grammar.axiom,
     rules: grammar.rules.map((rule) => ({ symbol: rule.symbol, successor: perturbAngles(rule.successor, rng, 0.14) })),
     iterations: clamp('iterations', grammar.iterations + lushness),
     angleDeg: clamp('angleDeg', grammar.angleDeg * vary(rng, 0.12)),
@@ -116,7 +116,7 @@ export function synthesizeSpecies(prompt: string): Species {
   };
   const epithet = EPITHET_STEMS[Math.floor(rng() * EPITHET_STEMS.length)] + EPITHET_ENDINGS[Math.floor(rng() * EPITHET_ENDINGS.length)];
 
-  return speciesSchema.parse({
+  const species = speciesSchema.parse({
     name: titleCase(text) || 'Unnamed Specimen',
     latin: `${archetype.genus} ${epithet}`,
     grammar: fitIterations(tuned, seed),
@@ -127,7 +127,15 @@ export function synthesizeSpecies(prompt: string): Species {
       leafSize: clamp('leafSize', form.leafSize * vary(rng, 0.12) * (lushness < 0 ? 0.7 : 1)),
     },
     palette: tint ? recolor(palette, tint, glow) : { ...palette, glow },
-    mood: MOOD_WORDS.find(([, words]) => hasWord(text, words))?.[0] ?? mood,
+    mood: MOOD_WORDS.find(([, words]) => hasWord(reading, words))?.[0] ?? mood,
     seed,
   });
+  return { species, known };
+}
+
+export const synthesizeSpecies = (prompt: string): Species => synthesize(prompt).species;
+
+export function findReference(prompt: string): Species | null {
+  const { species, known } = synthesize(prompt);
+  return known ? species : null;
 }
