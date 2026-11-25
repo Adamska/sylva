@@ -73,8 +73,8 @@ export function buildFoliageMesh(skeleton: Skeleton, limbs: LimbMetrics, form: P
   const thin = (count: number) => Math.max(1, Math.min(Math.round(1 / detail), Math.floor(count / SPARSE_NODES)));
   const leafStride = thin(leafNodes);
   const organThin = thin(organNodes);
-  const organBudget = Math.min(FOLIAGE_LIMITS.maxBlades * 0.5, (FOLIAGE_LIMITS.maxOrganVertices / organs.vertices) * organs.blades);
-  const organStride = Math.max(organThin, Math.ceil((organNodes * organs.blades) / organBudget));
+  const bladeStride = Math.max(organThin, Math.ceil((organNodes * organs.blades) / (FOLIAGE_LIMITS.maxBlades * 0.5)));
+  const organStride = Math.max(bladeStride, Math.ceil((organNodes * organs.vertices) / FOLIAGE_LIMITS.maxOrganVertices));
   const keptLeaves = Math.ceil(leafNodes / leafStride);
   const keptOrgans = Math.ceil(organNodes / organStride);
   const organBlades = keptOrgans * organs.blades;
@@ -179,5 +179,5 @@ export function buildFoliageMesh(skeleton: Skeleton, limbs: LimbMetrics, form: P
     }
   }
 
-  return { mesh: writer.toMesh(), blades: leafBlades + organBlades, truncated: cluster < leaf.cluster || organStride > organThin };
+  return { mesh: writer.toMesh(), blades: leafBlades + organBlades, truncated: cluster < leaf.cluster || bladeStride > organThin };
 }
