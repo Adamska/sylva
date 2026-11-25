@@ -5,7 +5,7 @@ import type { LanguageModel } from 'ai';
 import type { GrammarSource } from '@/types/grammarApi';
 
 export interface ConfiguredModel {
-  source: Exclude<GrammarSource, 'procedural'>;
+  source: Extract<GrammarSource, 'gemini' | 'openai'>;
   model: LanguageModel;
   providerOptions?: { google: GoogleLanguageModelOptions };
 }

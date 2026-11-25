@@ -1,6 +1,7 @@
 import { speciesSchema, type Palette, type Species } from '@/types/botany';
 import { hslToHex } from './colorOps';
 import {
+  DESCRIPTOR_WORDS,
   DROOP_WORDS,
   FLOWER_WORDS,
   GLOW_WORDS,
@@ -21,7 +22,7 @@ import { createRng, hashString, type Rng } from './random';
 import { fitIterations } from './speciesNormalizer';
 import { DEFAULT_TREE, FLOWERING_TREE, TREE_HINTS, TREES } from './treeCatalog';
 import { bearsOrgans, cultivate, type Archetype, type Variety } from './varieties';
-import { findMatches, findNearest, hasWord, readText, withoutWord, type Match, type Reading } from './wordMatch';
+import { findMatches, findNearest, hasWord, readText, withoutWord, withoutWords, type Match, type Reading } from './wordMatch';
 
 interface Resolution {
   archetype: Archetype;
@@ -68,7 +69,7 @@ function resolve(reading: Reading, rng: Rng): Resolution {
   }
   if (tree) return { archetype: cultivate(tree.entry), word: tree.word, known: true };
   const hinted = strongest(findMatches(reading, TREE_HINTS));
-  if (hinted) return { archetype: cultivate(hinted.entry), word: null, known: true };
+  if (hinted) return { archetype: cultivate(hinted.entry), word: hinted.word, known: true };
   if (wantsTree) return { archetype: cultivate(hasWord(reading, FLOWER_WORDS) ? FLOWERING_TREE : DEFAULT_TREE), word: null, known: true };
   if (hasWord(reading, FLOWER_WORDS)) return { archetype: cultivate(FLOWERS[Math.floor(rng() * FLOWERS.length)]), word: null, known: false };
 
@@ -78,16 +79,24 @@ function resolve(reading: Reading, rng: Rng): Resolution {
   return { archetype: cultivate(pool[Math.floor(rng() * pool.length)]), word: null, known: false };
 }
 
-function titleCase(text: string): string {
+export interface Interpretation {
+  species: Species;
+  known: boolean;
+  complete: boolean;
+}
+
+const SMALL_NAME_WORDS = new Set(['of', 'the', 'in', 'at', 'and', 'de', 'du', 'des', 'la', 'le', 'les', 'au', 'aux', 'en', 'et', 'd']);
+
+export function titleCase(text: string): string {
   return text
     .split(/\s+/)
     .filter(Boolean)
-    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .map((word, index) => (index > 0 && SMALL_NAME_WORDS.has(word) ? word : word[0].toUpperCase() + word.slice(1)))
     .join(' ')
     .slice(0, 48);
 }
 
-function synthesize(prompt: string): { species: Species; known: boolean } {
+export function interpretPrompt(prompt: string): Interpretation {
   const text = prompt.trim().toLowerCase();
   const seed = hashString(text);
   const rng = createRng(seed);
@@ -130,12 +139,7 @@ function synthesize(prompt: string): { species: Species; known: boolean } {
     mood: MOOD_WORDS.find(([, words]) => hasWord(reading, words))?.[0] ?? mood,
     seed,
   });
-  return { species, known };
+  return { species, known, complete: known && withoutWords(hues, DESCRIPTOR_WORDS).words.length === 0 };
 }
 
-export const synthesizeSpecies = (prompt: string): Species => synthesize(prompt).species;
-
-export function findReference(prompt: string): Species | null {
-  const { species, known } = synthesize(prompt);
-  return known ? species : null;
-}
+export const synthesizeSpecies = (prompt: string): Species => interpretPrompt(prompt).species;

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { createThumbnail } from '@/capture/thumbnails';
+import { CATALOG } from '@/engine/catalog';
 import { useBotanyStore } from '@/store/useBotanyStore';
 import { useHerbariumStore } from '@/store/useHerbariumStore';
 import { saveToHerbarium } from '@/studio/actions';
@@ -61,6 +62,7 @@ export function HerbariumShelf() {
   const saved = useHerbariumStore((state) => state.saved);
   const presetThumbnails = useHerbariumStore((state) => state.presetThumbnails);
   const remove = useHerbariumStore((state) => state.remove);
+  const setCatalogOpen = useBotanyStore((state) => state.setCatalogOpen);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +80,17 @@ export function HerbariumShelf() {
 
   return (
     <div className="sylva-scroll -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1.5">
+      <button
+        type="button"
+        onClick={() => setCatalogOpen(true)}
+        className="flex w-[5.6rem] shrink-0 flex-col justify-between rounded-lg border border-brass/40 bg-brass/[0.07] px-2 pb-1.5 pt-2 text-left transition-colors hover:border-brass/70 hover:bg-brass/15"
+      >
+        <span className="font-serif text-[1.7rem] leading-none text-brass">{CATALOG.length}</span>
+        <span className="flex flex-col gap-0.5">
+          <span className="font-mono text-[9px] text-lichen">Browse all</span>
+          <span className="text-[10.5px] leading-tight text-bone">Catalogue</span>
+        </span>
+      </button>
       {SPECIES_PRESETS.map((preset, index) => (
         <SpecimenCard
           key={preset.id}

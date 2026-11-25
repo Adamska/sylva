@@ -1,18 +1,22 @@
 'use client';
 
-import { useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { suggestFromCatalog, type CatalogHit } from '@/engine/catalog';
+import { readText } from '@/engine/wordMatch';
 import { useBotanyStore } from '@/store/useBotanyStore';
 import { useHerbariumStore } from '@/store/useHerbariumStore';
 import { REFINEMENTS } from '@/studio/refinements';
 import { PROMPT_MAX_LENGTH } from '@/types/grammarApi';
 
 const SOURCE_LABELS = {
+  catalog: 'Grown from the catalogue',
   gemini: 'Grammar composed by the language model',
   openai: 'Grammar composed by the language model',
   procedural: 'Grammar grown by the procedural generator',
 } as const;
 
 const SUGGESTIONS = ['giant sunflower at sunset', 'crimson weeping cherry at midnight', 'pink tulips at dawn', 'towering glowing blue fir', 'wild red poppies'] as const;
+const CATALOG_HITS = 6;
 const chipClass =
   'shrink-0 rounded-full border border-hairline bg-[#0b0c0f]/55 px-2.5 py-1 text-[10px] text-bone/80 backdrop-blur-md transition-colors hover:border-brass/50 hover:text-brass';
 
@@ -25,6 +29,7 @@ export function SpeciesPromptBar() {
   const recent = useHerbariumStore((state) => state.prompts);
   const working = generation.status === 'working';
   const suggesting = focused && prompt.trim().length === 0;
+  const hits = useMemo(() => (focused ? suggestFromCatalog(prompt, CATALOG_HITS) : []), [focused, prompt]);
 
   const grow = (description: string) => {
     const text = description.trim();
@@ -33,6 +38,11 @@ export function SpeciesPromptBar() {
     setRecall(-1);
     useHerbariumStore.getState().rememberPrompt(text);
     void growFromPrompt(text);
+  };
+  const complete = (hit: CatalogHit) => {
+    const words = prompt.trim().split(/\s+/);
+    const index = words.findIndex((word) => readText(word).words.includes(hit.token));
+    grow(index === -1 ? hit.entry.label : words.map((word, position) => (position === index ? hit.entry.label : word)).join(' '));
   };
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -60,8 +70,14 @@ export function SpeciesPromptBar() {
       </p>
 
       <div className="sylva-scroll flex w-full items-center gap-1.5 overflow-x-auto pb-0.5">
-        <span className="shrink-0 pr-1 font-mono text-[9px] uppercase tracking-[0.16em] text-lichen">{suggesting ? 'Try' : 'Refine'}</span>
-        {suggesting
+        <span className="shrink-0 pr-1 font-mono text-[9px] uppercase tracking-[0.16em] text-lichen">{hits.length > 0 ? 'Catalogue' : suggesting ? 'Try' : 'Refine'}</span>
+        {hits.length > 0
+          ? hits.map((hit) => (
+              <button key={hit.entry.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => complete(hit)} className={chipClass}>
+                {hit.entry.name}
+              </button>
+            ))
+          : suggesting
           ? [...recent.slice(0, 2), ...SUGGESTIONS].slice(0, 5).map((suggestion) => (
               <button key={suggestion} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => grow(suggestion)} className={chipClass}>
                 {suggestion}

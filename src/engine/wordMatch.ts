@@ -38,6 +38,10 @@ export function withoutWord(reading: Reading, word: string): Reading {
   return fromWords(reading.words.filter((candidate) => !parts.some((part) => stemsOf(candidate).includes(part) || singularOf(candidate) === part)));
 }
 
+export function withoutWords(reading: Reading, words: readonly string[]): Reading {
+  return words.reduce((rest, word) => (matches(rest, word) ? withoutWord(rest, word) : rest), reading);
+}
+
 export function findMatches<Entry extends Keyed>(reading: Reading, entries: readonly Entry[]): Match<Entry>[] {
   return entries.flatMap((entry) => entry.words.filter((word) => matches(reading, word)).map((word) => ({ entry, word })));
 }

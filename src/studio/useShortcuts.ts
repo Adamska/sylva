@@ -22,11 +22,12 @@ export function useShortcuts(): void {
       }
       if (event.key === 'Escape') {
         if (store.paletteOpen) store.setPaletteOpen(false);
+        else if (store.catalogOpen) store.setCatalogOpen(false);
         else if (store.presenting) store.setPresenting(false);
         else if (store.evolving) store.setEvolving(false);
         return;
       }
-      if (isTyping(event.target) || store.paletteOpen) return;
+      if (isTyping(event.target) || store.paletteOpen || store.catalogOpen) return;
       if (modifier && key === 'z') {
         event.preventDefault();
         if (event.shiftKey) store.redo();

@@ -29,6 +29,7 @@ export const COMMANDS: readonly Command[] = [
     shortcut: String(index + 1),
     run: () => store().selectPreset(preset.id),
   })),
+  { id: 'catalog', group: 'Herbarium', title: 'Browse the catalogue', shortcut: 'C', run: () => store().setCatalogOpen(true) },
   { id: 'evolve', group: 'Grow', title: 'Evolve variants', shortcut: 'V', run: () => store().setEvolving(!store().evolving) },
   { id: 'reseed', group: 'Grow', title: 'Reseed', shortcut: 'R', run: () => store().reseed() },
   { id: 'undo', group: 'Grow', title: 'Undo', shortcut: 'Mod+Z', run: () => store().undo() },

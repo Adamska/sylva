@@ -6,6 +6,7 @@ import { useBotanyStore } from '@/store/useBotanyStore';
 import { useHerbariumStore } from '@/store/useHerbariumStore';
 import { readSharedSpecies } from '@/studio/shareLink';
 import { useShortcuts } from '@/studio/useShortcuts';
+import { CatalogPanel } from './CatalogPanel';
 import { CommandPalette } from './CommandPalette';
 import { EvolveTray } from './EvolveTray';
 import { FrameReadout } from './FrameReadout';
@@ -28,6 +29,7 @@ export function Atelier() {
   const presenting = useBotanyStore((state) => state.presenting);
   const evolving = useBotanyStore((state) => state.evolving);
   const paletteOpen = useBotanyStore((state) => state.paletteOpen);
+  const catalogOpen = useBotanyStore((state) => state.catalogOpen);
   const setEvolving = useBotanyStore((state) => state.setEvolving);
   const setPaletteOpen = useBotanyStore((state) => state.setPaletteOpen);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,6 +49,7 @@ export function Atelier() {
       <StatusToast />
       {presenting && <PresentationOverlay />}
       {paletteOpen && <CommandPalette />}
+      {catalogOpen && !presenting && <CatalogPanel />}
 
       <div
         aria-hidden={presenting}

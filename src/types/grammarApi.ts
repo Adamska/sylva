@@ -47,7 +47,7 @@ export const speciesDraftSchema = z.object({
 });
 
 export type SpeciesDraft = z.infer<typeof speciesDraftSchema>;
-export type GrammarSource = 'gemini' | 'openai' | 'procedural';
+export type GrammarSource = 'catalog' | 'gemini' | 'openai' | 'procedural';
 
 export interface GrammarResponse {
   species: Species;

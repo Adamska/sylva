@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { interpretPrompt } from '@/engine/grammarSynth';
 import { MAX_RULES, speciesSchema, type Grammar, type LightingMood, type Palette, type PlantForm, type ProductionRule, type Species } from '@/types/botany';
 import type { GrammarResponse, GrammarSource } from '@/types/grammarApi';
 import { DEFAULT_PRESET, SPECIES_PRESETS } from '@/types/presets';
@@ -37,6 +38,7 @@ export interface SpeciesSlice {
   undo: () => void;
   redo: () => void;
   growFromPrompt: (prompt: string) => Promise<void>;
+  plantFromCatalog: (species: Species) => void;
 }
 
 const HISTORY_LIMIT = 80;
@@ -125,9 +127,19 @@ export const createSpeciesSlice: StateCreator<BotanyState, [], [], SpeciesSlice>
         return { ...entry, future, past: [...state.past, { species: state.species, presetId: state.presetId }] };
       }),
 
+    plantFromCatalog: (species) => {
+      get().adoptSpecies(species);
+      set({ generation: { status: 'done', source: 'catalog', message: null } });
+    },
+
     growFromPrompt: async (prompt) => {
       const description = prompt.trim();
       if (!description || get().generation.status === 'working') return;
+      const local = interpretPrompt(description);
+      if (local.complete) {
+        get().plantFromCatalog(local.species);
+        return;
+      }
       set({ generation: { status: 'working', source: null, message: null } });
       try {
         const response = await fetch('/api/grammar', {
