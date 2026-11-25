@@ -15,13 +15,15 @@ import { AMBIENCE_GROUP } from './studioBridge';
 const MSAA_SAMPLES = 4;
 
 export default function SpecimenCanvas() {
-  const autoRotate = useBotanyStore((state) => state.autoRotate || state.presenting);
+  const paused = useBotanyStore((state) => state.catalogOpen);
+  const autoRotate = useBotanyStore((state) => (state.autoRotate || state.presenting) && !state.catalogOpen);
   const bloom = useBotanyStore((state) => state.shading.bloom);
   const depthOfField = useBotanyStore((state) => state.shading.depthOfField);
   const focusHeight = useBotanyStore((state) => (state.stats ? Math.min(state.stats.height, 4.6) / 2 : 2));
 
   return (
     <Canvas
+      frameloop={paused ? 'demand' : 'always'}
       shadows="percentage"
       dpr={[1, 1.75]}
       camera={{ position: [6.1, 3.1, 10.1], fov: 30, near: 0.1, far: 90 }}

@@ -76,7 +76,7 @@ export function CatalogPanel() {
         role="dialog"
         aria-label="Species catalogue"
         onPointerDown={(event) => event.stopPropagation()}
-        className="flex h-full w-full max-w-[66rem] flex-col overflow-hidden rounded-2xl border border-hairline bg-[#0d0e12]/92 shadow-[0_40px_120px_-30px_rgba(0,0,0,1)] backdrop-blur-md"
+        className="flex h-full w-full max-w-[66rem] flex-col overflow-hidden rounded-2xl border border-hairline bg-[#0d0e12] shadow-[0_40px_120px_-30px_rgba(0,0,0,1)]"
       >
         <header className="flex flex-col gap-3 border-b border-hairline px-5 pb-3.5 pt-4">
           <div className="flex items-baseline gap-4">
