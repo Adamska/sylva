@@ -1,6 +1,6 @@
 import type { OrganShape } from '@/types/botany';
 import { FLOWER_PROFILES, type FlowerProfile } from './flowerProfiles';
-import { bladeIndexCount, bladeVertexCount, HEART_ORGAN, HINGE_SHARE, PETAL_ORGAN, STAMEN_ORGAN, type BladeSpec, type FoliageWriter } from './foliageWriter';
+import { bladeIndexCount, bladeVertexCount, HEART_ORGAN, HINGE_SHARE, PETAL_ORGAN, type BladeSpec, type FoliageWriter } from './foliageWriter';
 import { orbIndexCount, orbVertexCount, writeOrb, type OrbSpec } from './orbWriter';
 import type { Rng } from './random';
 
@@ -19,6 +19,7 @@ export interface OrganFrame {
 export type OrganScratch = BladeSpec & OrbSpec;
 
 export interface OrganPlan {
+  clearance: number;
   blades: number;
   vertices: number;
   indices: number;
@@ -34,6 +35,7 @@ const WIDE_HEART = 0.4;
 
 function planBerries(): OrganPlan {
   return {
+    clearance: 0,
     blades: 1,
     vertices: orbVertexCount(BERRY_SEGMENTS, BERRY_RINGS),
     indices: orbIndexCount(BERRY_SEGMENTS, BERRY_RINGS),
@@ -65,6 +67,7 @@ function planFlowers(profile: FlowerProfile, detail: number): OrganPlan {
   const hasHeart = profile.core > 0;
 
   return {
+    clearance: profile.clearance,
     blades: profile.whorls.reduce((total, whorl) => total + whorl.count, 0),
     vertices: profile.whorls.reduce((total, whorl, index) => total + whorl.count * bladeVertexCount(rows[index]), hasHeart ? orbVertexCount(segments, rings) : 0),
     indices: profile.whorls.reduce((total, whorl, index) => total + whorl.count * bladeIndexCount(rows[index]), hasHeart ? orbIndexCount(segments, rings) : 0),
@@ -102,13 +105,14 @@ function planFlowers(profile: FlowerProfile, detail: number): OrganPlan {
       const vary = () => 1 + profile.scatter * (rng() * 2 - 1);
 
       profile.whorls.forEach((whorl, index) => {
-        spec.organ = whorl.stamen ? STAMEN_ORGAN : PETAL_ORGAN;
+        spec.organ = whorl.tone;
         spec.rows = rows[index];
         spec.fold = whorl.fold;
         spec.curl = whorl.curlDeg * DEG_TO_RAD;
         spec.outline = whorl.outline;
+        const turn = whorl.turnDeg === null ? (Math.PI * index) / whorl.count : whorl.turnDeg * DEG_TO_RAD;
         for (let petal = 0; petal < whorl.count; petal++) {
-          const angle = start + (Math.PI * (index + 2 * petal)) / whorl.count;
+          const angle = start + turn + (Math.PI * 2 * petal) / whorl.count;
           const splay = whorl.splayDeg * DEG_TO_RAD * vary();
           const radialX = px * Math.cos(angle) + qx * Math.sin(angle);
           const radialY = py * Math.cos(angle) + qy * Math.sin(angle);

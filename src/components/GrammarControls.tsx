@@ -11,7 +11,16 @@ import { RangeField } from './ui/RangeField';
 import { Section } from './ui/Section';
 import { Segmented } from './ui/Segmented';
 
-const LEAF_LABELS: Record<LeafShape, string> = { lanceolate: 'Lance', needle: 'Needle', sword: 'Sword', ovate: 'Ovate', polyp: 'Polyp' };
+const LEAF_LABELS: Record<LeafShape, string> = {
+  lanceolate: 'Lance',
+  needle: 'Needle',
+  sword: 'Sword',
+  ovate: 'Ovate',
+  polyp: 'Polyp',
+  lobed: 'Lobed',
+  round: 'Round',
+  palmate: 'Palmate',
+};
 const ORGAN_LABELS: Record<OrganShape, string> = {
   blossom: 'Blossom',
   daisy: 'Daisy',
@@ -22,6 +31,11 @@ const ORGAN_LABELS: Record<OrganShape, string> = {
   bell: 'Bell',
   poppy: 'Poppy',
   pompom: 'Pompom',
+  mum: 'Mum',
+  trumpet: 'Trumpet',
+  star: 'Star',
+  orchid: 'Orchid',
+  calla: 'Calla',
   berry: 'Berry',
 };
 const leafOptions = LEAF_SHAPES.map((shape) => ({ value: shape, label: LEAF_LABELS[shape] }));
@@ -79,7 +93,7 @@ export function GrammarControls({ onEvolve }: { onEvolve: () => void }) {
           <RangeField label="Trunk radius" value={form.trunkRadius} range={PARAMETER_RANGES.trunkRadius} onChange={(trunkRadius) => setForm({ trunkRadius })} />
           <RangeField label="Length decay" value={form.lengthDecay} range={PARAMETER_RANGES.lengthDecay} onChange={(lengthDecay) => setForm({ lengthDecay })} />
           <RangeField label="Angular jitter" value={form.angleJitter} range={PARAMETER_RANGES.angleJitter} onChange={(angleJitter) => setForm({ angleJitter })} />
-          <Segmented label="Leaf shape" value={form.leafShape} options={leafOptions} onChange={(leafShape) => setForm({ leafShape })} />
+          <Segmented label="Leaf shape" value={form.leafShape} options={leafOptions} columns={4} onChange={(leafShape) => setForm({ leafShape })} />
           <RangeField label="Leaf size" value={form.leafSize} range={PARAMETER_RANGES.leafSize} onChange={(leafSize) => setForm({ leafSize })} />
           <Segmented label="Flower or fruit (K)" value={form.organShape} options={organOptions} columns={5} onChange={(organShape) => setForm({ organShape })} />
           <RangeField label="Flower or fruit size" value={form.organSize} range={PARAMETER_RANGES.organSize} onChange={(organSize) => setForm({ organSize })} />

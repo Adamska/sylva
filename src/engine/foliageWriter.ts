@@ -39,6 +39,7 @@ export const LEAF_ORGAN = 0;
 export const PETAL_ORGAN = 1;
 export const STAMEN_ORGAN = 2;
 export const HEART_ORGAN = 3;
+export const INNER_ORGAN = 4;
 
 export const bladeVertexCount = (rows: number) => (rows + 1) * 3;
 export const bladeIndexCount = (rows: number) => rows * 12;

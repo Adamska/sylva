@@ -32,7 +32,8 @@ void main() {
   vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
   float organness = min(vOrgan, 1.0);
   float stamen = step(1.5, vOrgan);
-  float heart = step(2.5, vOrgan);
+  float inner = step(3.5, vOrgan);
+  float heart = step(2.5, vOrgan) - inner;
   float leafness = 1.0 - organness;
 
   float across = abs(vUv.x - 0.5) * 2.0;
@@ -53,7 +54,8 @@ void main() {
   float florets = 0.5 + 0.5 * sin(vUv.y * 60.0);
   vec3 disc = uOrganCore * mix(0.62, 1.12, florets) * mix(0.7, 1.0, smoothstep(0.0, 0.3, vUv.y));
   disc = mix(disc, mix(uLeafDeep, uLeafBright, 0.35), smoothstep(0.52, 0.6, vUv.y));
-  vec3 organ = mix(petal, mix(filament, disc, heart), stamen);
+  vec3 corona = uOrganCore * mix(0.7, 1.08, smoothstep(0.0, 0.7, vUv.y));
+  vec3 organ = mix(petal, mix(mix(filament, disc, heart), corona, inner), stamen);
   vec3 albedo = mix(leaf, organ, organness);
 
   float sun = getShadowMask();

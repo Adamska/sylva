@@ -1,7 +1,23 @@
 import { z } from 'zod';
 
-export const LEAF_SHAPES = ['lanceolate', 'needle', 'sword', 'ovate', 'polyp'] as const;
-export const ORGAN_SHAPES = ['blossom', 'daisy', 'sunflower', 'tulip', 'rose', 'lily', 'bell', 'poppy', 'pompom', 'berry'] as const;
+export const LEAF_SHAPES = ['lanceolate', 'needle', 'sword', 'ovate', 'polyp', 'lobed', 'round', 'palmate'] as const;
+export const ORGAN_SHAPES = [
+  'blossom',
+  'daisy',
+  'sunflower',
+  'tulip',
+  'rose',
+  'lily',
+  'bell',
+  'poppy',
+  'pompom',
+  'mum',
+  'trumpet',
+  'star',
+  'orchid',
+  'calla',
+  'berry',
+] as const;
 export const LIGHTING_MOODS = ['goldenHour', 'studio', 'moonlit', 'abyssal', 'dawn'] as const;
 
 export type LeafShape = (typeof LEAF_SHAPES)[number];
