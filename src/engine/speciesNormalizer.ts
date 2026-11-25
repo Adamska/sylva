@@ -1,4 +1,5 @@
 import {
+  DEFAULT_ORGAN_CORE,
   MAX_RULES,
   PARAMETER_RANGES,
   speciesSchema,
@@ -24,6 +25,7 @@ const FALLBACK_PALETTE: Palette = {
   leafBright: '#9cc45a',
   subsurface: '#e2e05a',
   organ: '#f3d2dc',
+  organCore: DEFAULT_ORGAN_CORE,
   glow: 0,
 };
 
@@ -85,6 +87,7 @@ function normalizePalette(palette: SpeciesDraft['palette']): Palette {
     leafBright: pick(palette.leafBright, FALLBACK_PALETTE.leafBright),
     subsurface: pick(palette.subsurface, FALLBACK_PALETTE.subsurface),
     organ: pick(palette.organ, FALLBACK_PALETTE.organ),
+    organCore: pick(palette.organCore, FALLBACK_PALETTE.organCore),
     glow: clampTo(PARAMETER_RANGES.glow, palette.glow, 0),
   };
 }

@@ -12,7 +12,18 @@ import { Section } from './ui/Section';
 import { Segmented } from './ui/Segmented';
 
 const LEAF_LABELS: Record<LeafShape, string> = { lanceolate: 'Lance', needle: 'Needle', sword: 'Sword', ovate: 'Ovate', polyp: 'Polyp' };
-const ORGAN_LABELS: Record<OrganShape, string> = { blossom: 'Blossom', berry: 'Berry' };
+const ORGAN_LABELS: Record<OrganShape, string> = {
+  blossom: 'Blossom',
+  daisy: 'Daisy',
+  sunflower: 'Sunflower',
+  tulip: 'Tulip',
+  rose: 'Rose',
+  lily: 'Lily',
+  bell: 'Bell',
+  poppy: 'Poppy',
+  pompom: 'Pompom',
+  berry: 'Berry',
+};
 const leafOptions = LEAF_SHAPES.map((shape) => ({ value: shape, label: LEAF_LABELS[shape] }));
 const organOptions = ORGAN_SHAPES.map((shape) => ({ value: shape, label: ORGAN_LABELS[shape] }));
 
@@ -70,7 +81,7 @@ export function GrammarControls({ onEvolve }: { onEvolve: () => void }) {
           <RangeField label="Angular jitter" value={form.angleJitter} range={PARAMETER_RANGES.angleJitter} onChange={(angleJitter) => setForm({ angleJitter })} />
           <Segmented label="Leaf shape" value={form.leafShape} options={leafOptions} onChange={(leafShape) => setForm({ leafShape })} />
           <RangeField label="Leaf size" value={form.leafSize} range={PARAMETER_RANGES.leafSize} onChange={(leafSize) => setForm({ leafSize })} />
-          <Segmented label="Flower or fruit (K)" value={form.organShape} options={organOptions} onChange={(organShape) => setForm({ organShape })} />
+          <Segmented label="Flower or fruit (K)" value={form.organShape} options={organOptions} columns={5} onChange={(organShape) => setForm({ organShape })} />
           <RangeField label="Flower or fruit size" value={form.organSize} range={PARAMETER_RANGES.organSize} onChange={(organSize) => setForm({ organSize })} />
         </Section>
 

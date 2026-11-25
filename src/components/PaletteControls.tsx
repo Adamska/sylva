@@ -12,6 +12,7 @@ const SWATCHES: readonly { key: ColorKey; label: string }[] = [
   { key: 'leafBright', label: 'Tip' },
   { key: 'subsurface', label: 'Glow' },
   { key: 'organ', label: 'Bloom' },
+  { key: 'organCore', label: 'Heart' },
 ];
 
 export function PaletteControls() {
@@ -19,7 +20,7 @@ export function PaletteControls() {
   const setPalette = useBotanyStore((state) => state.setPalette);
 
   return (
-    <div className="grid grid-cols-6 gap-1.5">
+    <div className="grid grid-cols-7 gap-1.5">
       {SWATCHES.map(({ key, label }) => (
         <label key={key} className="group flex cursor-pointer flex-col items-center gap-1.5">
           <span

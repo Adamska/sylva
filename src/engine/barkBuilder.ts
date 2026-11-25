@@ -5,6 +5,8 @@ import type { Skeleton } from './turtle';
 const MIN_SIDES = 3;
 const MAX_SIDES = 12;
 const TAU = Math.PI * 2;
+const GREEN_STEM_RADIUS = 0.05;
+const WOODY_TRUNK_RADIUS = 0.12;
 const basis = new Float64Array(6);
 
 function resolveBasis(dx: number, dy: number, dz: number, rx: number, ry: number, rz: number): void {
@@ -29,6 +31,7 @@ function resolveBasis(dx: number, dy: number, dz: number, rx: number, ry: number
 export function buildBarkMesh(skeleton: Skeleton, limbs: LimbMetrics, trunkRadius: number, detail: number): MeshData {
   const { segmentCount: count, starts, ends, frames, parents, segmentRules } = skeleton;
   const { startRadius, endRadius, startFlex, endFlex, startPath, endPath, continuation, continues } = limbs;
+  const woodiness = Math.min(1, Math.max(0, (trunkRadius - GREEN_STEM_RADIUS) / (WOODY_TRUNK_RADIUS - GREEN_STEM_RADIUS)));
 
   const sides = new Uint8Array(count);
   let vertexTotal = 0;
@@ -68,7 +71,7 @@ export function buildBarkMesh(skeleton: Skeleton, limbs: LimbMetrics, trunkRadiu
     const radius = atEnd ? endRadius[segment] : startRadius[segment];
     const flex = atEnd ? endFlex[segment] : startFlex[segment];
     const path = atEnd ? endPath[segment] : startPath[segment];
-    const grain = Math.sqrt(Math.min(1, radius / trunkRadius));
+    const grain = Math.sqrt(Math.min(1, radius / trunkRadius)) * woodiness;
     const first = vertex;
     resolveBasis(dx, dy, dz, references[o], references[o + 1], references[o + 2]);
     references.set([basis[0], basis[1], basis[2]], o);

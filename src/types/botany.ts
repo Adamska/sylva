@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const LEAF_SHAPES = ['lanceolate', 'needle', 'sword', 'ovate', 'polyp'] as const;
-export const ORGAN_SHAPES = ['blossom', 'berry'] as const;
+export const ORGAN_SHAPES = ['blossom', 'daisy', 'sunflower', 'tulip', 'rose', 'lily', 'bell', 'poppy', 'pompom', 'berry'] as const;
 export const LIGHTING_MOODS = ['goldenHour', 'studio', 'moonlit', 'abyssal', 'dawn'] as const;
 
 export type LeafShape = (typeof LEAF_SHAPES)[number];
@@ -30,6 +30,7 @@ export const PARAMETER_RANGES = {
 
 export const SENTENCE_PATTERN = /^[A-Za-z0-9+\-&^\\/|[\]!().]*$/;
 export const MAX_RULES = 8;
+export const DEFAULT_ORGAN_CORE = '#e8b83a';
 
 const ranged = (range: NumericRange) => z.number().min(range.min).max(range.max);
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
@@ -66,6 +67,7 @@ export const paletteSchema = z.object({
   leafBright: hexColor,
   subsurface: hexColor,
   organ: hexColor,
+  organCore: hexColor.default(DEFAULT_ORGAN_CORE),
   glow: ranged(PARAMETER_RANGES.glow),
 });
 

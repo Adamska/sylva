@@ -30,10 +30,11 @@ vec3 rotateAbout(vec3 vector, vec3 axis, float angle) {
 }
 
 void main() {
+  float organ = min(aOrgan, 1.0);
   vec3 carried = windOffset(aAnchor, aBranchFactor);
   vec3 downwind = vec3(uWindDirection.x, 0.0, uWindDirection.y);
   float gust = windGust((modelMatrix * vec4(aAnchor, 1.0)).xyz);
-  float force = min(1.2, uWindStrength * uFlutter) * mix(1.0, 0.75, aOrgan) * aSway;
+  float force = min(1.2, uWindStrength * uFlutter) * mix(1.0, 0.75, organ) * aSway;
   float drive = min(0.95, force * (0.18 + 0.82 * gust));
 
   float beat = uWindTime * (8.0 + 6.0 * aPhase) + aPhase * 37.7;
@@ -46,14 +47,14 @@ void main() {
   float shed = smoothstep(0.62, 0.97, uSeason);
   float budding = mix(0.4, 1.0, smoothstep(0.0, 0.22, uSeason));
   float gone = step(rank, shed);
-  float loose = step(shed, rank) * step(rank, shed + 0.12) * step(0.001, shed) * (1.0 - aOrgan);
+  float loose = step(shed, rank) * step(rank, shed + 0.12) * step(0.001, shed) * (1.0 - organ);
   float cycle = fract(uTime * 0.09 + aPhase * 17.0);
   float fall = smoothstep(0.35, 1.0, cycle) * loose;
   float presence = mix(1.0, smoothstep(0.0, 0.08, cycle) * (1.0 - smoothstep(0.92, 1.0, cycle)), loose);
 
   float unfurl = smoothstep(0.0, 0.25, uGrowth * 1.45 - 0.2 - aBranchFactor);
   float leafScale = unfurl * budding * (1.0 - gone) * presence;
-  float scale = mix(leafScale, unfurl * uOrganScale, aOrgan);
+  float scale = mix(leafScale, unfurl * uOrganScale, organ);
 
   vec3 tumbleAxis = normalize(vec3(sin(aPhase * 40.0), 0.35, cos(aPhase * 40.0)));
   vec3 hinge = normalize(cross(aAxis, tumbleAxis) + vec3(1e-5));
@@ -82,7 +83,7 @@ void main() {
   vPhase = aPhase;
   vRule = aRule;
   vOrgan = aOrgan;
-  vTurn = smoothstep(0.0, 1.0, smoothstep(0.48, 0.8, uSeason) * 1.5 - rank * 0.5) * (1.0 - aOrgan);
+  vTurn = smoothstep(0.0, 1.0, smoothstep(0.48, 0.8, uSeason) * 1.5 - rank * 0.5) * (1.0 - organ);
 
   #if defined(USE_SHADOWMAP) && NUM_DIR_LIGHT_SHADOWS > 0
     vec3 towardLight = worldNormal * (dot(worldNormal, uKeyDirection) < 0.0 ? -1.0 : 1.0);

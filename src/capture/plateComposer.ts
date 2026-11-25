@@ -160,9 +160,9 @@ export async function composePlate(portrait: HTMLCanvasElement, species: Species
   });
 
   heading(context, fonts, 'PALETTE', 1840, 2664);
-  const { barkDark, barkLight, leafDeep, leafBright, subsurface, organ } = species.palette;
-  [barkDark, barkLight, leafDeep, leafBright, subsurface, organ].forEach((colour, index) => {
-    const y = 2700 + index * 58;
+  const { barkDark, barkLight, leafDeep, leafBright, subsurface, organ, organCore } = species.palette;
+  [barkDark, barkLight, leafDeep, leafBright, subsurface, organ, organCore].forEach((colour, index) => {
+    const y = 2700 + index * 50;
     context.fillStyle = colour;
     context.beginPath();
     context.arc(1862, y + 8, 20, 0, Math.PI * 2);

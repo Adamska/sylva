@@ -4,13 +4,14 @@ import { SPECIES_PRESETS } from '@/types/presets';
 export interface Archetype {
   genus: string;
   keywords: readonly string[];
+  blooming?: boolean;
   template: Omit<Species, 'name' | 'latin' | 'seed'>;
 }
 
 const [cherry, willow, pine, agave, coral] = SPECIES_PRESETS.map((preset) => preset.species);
 const fromPreset = ({ grammar, form, palette, mood }: Species): Archetype['template'] => ({ grammar, form, palette, mood });
 
-const leafGreens = { leafDeep: '#2c5a26', leafBright: '#93c552', subsurface: '#dfe45a', organ: '#f3d2dc', glow: 0 };
+const leafGreens = { leafDeep: '#2c5a26', leafBright: '#93c552', subsurface: '#dfe45a', organ: '#f3d2dc', organCore: '#e8b83a', glow: 0 };
 const organs = { organShape: 'blossom', organSize: 0.12 } as const;
 
 export const DEFAULT_ARCHETYPE: Archetype = {
@@ -36,14 +37,14 @@ export const DEFAULT_ARCHETYPE: Archetype = {
 };
 
 export const ARCHETYPES: readonly Archetype[] = [
-  { genus: 'Prunus', keywords: ['cherry', 'sakura', 'blossom', 'plum', 'apple', 'magnolia', 'almond', 'flowering', 'flower', 'orchard'], template: fromPreset(cherry) },
+  { genus: 'Prunus', keywords: ['cherry', 'sakura', 'blossom', 'plum', 'apple', 'magnolia', 'almond', 'flowering', 'orchard'], template: fromPreset(cherry) },
   { genus: 'Salix', keywords: ['willow', 'weeping', 'drooping', 'cascade', 'cascading', 'wisteria', 'pendulous'], template: fromPreset(willow) },
   { genus: 'Pinus', keywords: ['pine', 'fir', 'spruce', 'cedar', 'juniper', 'cypress', 'yew', 'conifer', 'larch', 'redwood', 'sequoia', 'christmas', 'evergreen'], template: fromPreset(pine) },
   { genus: 'Agave', keywords: ['agave', 'aloe', 'succulent', 'yucca', 'rosette', 'bromeliad', 'pineapple', 'cactus', 'desert'], template: fromPreset(agave) },
   { genus: 'Corallodendron', keywords: ['coral', 'alien', 'bioluminescent', 'neon', 'crystal', 'reef', 'fungus', 'mushroom', 'abyss', 'nebula'], template: fromPreset(coral) },
   {
     genus: 'Rosa',
-    keywords: ['bush', 'shrub', 'rose', 'lavender', 'sage', 'berry', 'hedge', 'tea', 'thicket', 'bramble'],
+    keywords: ['bush', 'shrub', 'berry', 'hedge', 'tea', 'thicket', 'bramble', 'currant', 'holly'],
     template: {
       grammar: {
         axiom: '[&(16)A]/(118)[&(24)A]/(127)[&(12)A]/(115)[&(28)A]',
@@ -76,7 +77,7 @@ export const ARCHETYPES: readonly Archetype[] = [
         tropismGravity: 0.3,
       },
       form: { trunkRadius: 0.03, lengthDecay: 0.72, angleJitter: 0.12, leafShape: 'lanceolate', leafSize: 0.17, ...organs },
-      palette: { barkDark: '#24301a', barkLight: '#5d7a35', leafDeep: '#1f4d24', leafBright: '#7fc24a', subsurface: '#d6ee58', organ: '#e9dfa0', glow: 0 },
+      palette: { barkDark: '#24301a', barkLight: '#5d7a35', leafDeep: '#1f4d24', leafBright: '#7fc24a', subsurface: '#d6ee58', organ: '#e9dfa0', organCore: '#c9a23a', glow: 0 },
       mood: 'studio',
     },
   },
@@ -97,7 +98,7 @@ export const ARCHETYPES: readonly Archetype[] = [
         tropismGravity: 0.85,
       },
       form: { trunkRadius: 0.13, lengthDecay: 0.5, angleJitter: 0.1, leafShape: 'lanceolate', leafSize: 0.46, ...organs },
-      palette: { barkDark: '#2e2419', barkLight: '#8c7654', leafDeep: '#1f5a2c', leafBright: '#8fcf55', subsurface: '#e8ea5c', organ: '#d9a441', glow: 0 },
+      palette: { barkDark: '#2e2419', barkLight: '#8c7654', leafDeep: '#1f5a2c', leafBright: '#8fcf55', subsurface: '#e8ea5c', organ: '#d9a441', organCore: '#8a5a22', glow: 0 },
       mood: 'goldenHour',
     },
   },
@@ -118,7 +119,7 @@ export const ARCHETYPES: readonly Archetype[] = [
         tropismGravity: 0.16,
       },
       form: { trunkRadius: 0.045, lengthDecay: 0.92, angleJitter: 0.16, leafShape: 'lanceolate', leafSize: 0.26, ...organs },
-      palette: { barkDark: '#3c4a1c', barkLight: '#a6b44c', leafDeep: '#2d5f25', leafBright: '#a4d25a', subsurface: '#eef06a', organ: '#e9dfa0', glow: 0 },
+      palette: { barkDark: '#3c4a1c', barkLight: '#a6b44c', leafDeep: '#2d5f25', leafBright: '#a4d25a', subsurface: '#eef06a', organ: '#e9dfa0', organCore: '#c9a23a', glow: 0 },
       mood: 'studio',
     },
   },

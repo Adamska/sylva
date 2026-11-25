@@ -41,6 +41,7 @@ function createUniforms() {
     uSubsurface: { value: new Color() },
     uGlowColor: { value: new Color() },
     uOrganColor: { value: new Color() },
+    uOrganCore: { value: new Color() },
   };
 }
 
@@ -102,6 +103,7 @@ export function applyPalette(uniforms: SpecimenUniforms, palette: Palette): void
   uniforms.uLeafBright.value.set(palette.leafBright);
   uniforms.uSubsurface.value.set(palette.subsurface);
   uniforms.uOrganColor.value.set(palette.organ);
+  uniforms.uOrganCore.value.set(palette.organCore);
   uniforms.uGlowColor.value.set(palette.leafBright).lerp(uniforms.uSubsurface.value, 0.25);
   uniforms.uGlow.value = palette.glow;
 }
@@ -122,7 +124,7 @@ const ramp = (from: number, to: number, value: number) => {
 };
 
 export function organScale(shape: OrganShape, season: number): number {
-  return shape === 'blossom'
-    ? ramp(0.02, 0.14, season) * (1 - ramp(0.42, 0.56, season))
-    : ramp(0.16, 0.3, season) * (1 - ramp(0.86, 0.97, season));
+  if (shape === 'berry') return ramp(0.16, 0.3, season) * (1 - ramp(0.86, 0.97, season));
+  if (shape === 'blossom') return ramp(0.02, 0.14, season) * (1 - ramp(0.42, 0.56, season));
+  return ramp(0.04, 0.2, season) * (1 - ramp(0.62, 0.78, season));
 }

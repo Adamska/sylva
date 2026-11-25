@@ -43,6 +43,7 @@ export function buildExportScene({ species, levels }: ExportSource): ExportScene
   const leafDeep = new Color(palette.leafDeep);
   const leafBright = new Color(palette.leafBright);
   const organ = new Color(palette.organ);
+  const organCore = new Color(palette.organCore);
   const scratch = new Color();
   const geometries: BufferGeometry[] = [];
 
@@ -84,7 +85,8 @@ export function buildExportScene({ species, levels }: ExportSource): ExportScene
       level.foliage,
       (vertex, target, offset) => {
         scratch.copy(leafDeep).lerp(leafBright, uv.getY(vertex));
-        if (isOrgan.getX(vertex) > 0.5) scratch.copy(organ).multiplyScalar(0.7 + 0.3 * uv.getY(vertex));
+        const kind = isOrgan.getX(vertex);
+        if (kind > 0.5) scratch.copy(kind > 2.5 ? organCore : organ).multiplyScalar(0.7 + 0.3 * uv.getY(vertex));
         scratch.multiplyScalar(0.6 + 0.4 * shade.getX(vertex)).toArray(target, offset);
       },
       (vertex, target, offset) => target.set([flex.getX(vertex), sway.getX(vertex) / peakSway, phase.getX(vertex)], offset),

@@ -4,6 +4,9 @@ export interface OrganSpec {
   ox: number;
   oy: number;
   oz: number;
+  ax: number;
+  ay: number;
+  az: number;
   flex: number;
   shade: number;
   rule: number;
@@ -12,9 +15,9 @@ export interface OrganSpec {
 }
 
 export interface BladeSpec extends OrganSpec {
-  ax: number;
-  ay: number;
-  az: number;
+  rx: number;
+  ry: number;
+  rz: number;
   dx: number;
   dy: number;
   dz: number;
@@ -25,27 +28,20 @@ export interface BladeSpec extends OrganSpec {
   halfWidth: number;
   rows: number;
   droop: number;
+  curl: number;
   fold: number;
   flutter: number;
   outline: (t: number) => number;
 }
 
-export interface BerrySpec extends OrganSpec {
-  cx: number;
-  cy: number;
-  cz: number;
-  radius: number;
-}
-
-const BERRY_SEGMENTS = 6;
-const BERRY_RINGS = 4;
-const BERRY_SWAY = 0.5;
-const HINGE_SHARE = 0.5;
+export const HINGE_SHARE = 0.5;
+export const LEAF_ORGAN = 0;
+export const PETAL_ORGAN = 1;
+export const STAMEN_ORGAN = 2;
+export const HEART_ORGAN = 3;
 
 export const bladeVertexCount = (rows: number) => (rows + 1) * 3;
 export const bladeIndexCount = (rows: number) => rows * 12;
-export const BERRY_VERTEX_COUNT = (BERRY_SEGMENTS + 1) * (BERRY_RINGS + 1);
-export const BERRY_INDEX_COUNT = BERRY_SEGMENTS * BERRY_RINGS * 6;
 
 export class FoliageWriter {
   private readonly positions: Float32Array;
@@ -62,9 +58,6 @@ export class FoliageWriter {
   private readonly indices: Uint32Array;
   private vertex = 0;
   private cursor = 0;
-  private axisX = 0;
-  private axisY = 1;
-  private axisZ = 0;
 
   constructor(vertexTotal: number, indexTotal: number) {
     this.positions = new Float32Array(vertexTotal * 3);
@@ -81,7 +74,11 @@ export class FoliageWriter {
     this.indices = new Uint32Array(indexTotal);
   }
 
-  private push(spec: OrganSpec, px: number, py: number, pz: number, nx: number, ny: number, nz: number, u: number, v: number, sway: number): void {
+  get vertexCount(): number {
+    return this.vertex;
+  }
+
+  push(spec: OrganSpec, px: number, py: number, pz: number, nx: number, ny: number, nz: number, u: number, v: number, sway: number): void {
     const o = this.vertex * 3;
     this.positions[o] = px;
     this.positions[o + 1] = py;
@@ -92,9 +89,9 @@ export class FoliageWriter {
     this.anchors[o] = spec.ox;
     this.anchors[o + 1] = spec.oy;
     this.anchors[o + 2] = spec.oz;
-    this.axes[o] = this.axisX;
-    this.axes[o + 1] = this.axisY;
-    this.axes[o + 2] = this.axisZ;
+    this.axes[o] = spec.ax;
+    this.axes[o + 1] = spec.ay;
+    this.axes[o + 2] = spec.az;
     this.uvs[this.vertex * 2] = u;
     this.uvs[this.vertex * 2 + 1] = v;
     this.sway[this.vertex] = sway;
@@ -106,20 +103,20 @@ export class FoliageWriter {
     this.vertex++;
   }
 
-  private setAxis(x: number, y: number, z: number): void {
-    this.axisX = x;
-    this.axisY = y;
-    this.axisZ = z;
+  triangles(corners: readonly number[]): void {
+    this.indices.set(corners, this.cursor);
+    this.cursor += corners.length;
   }
 
   blade(spec: BladeSpec): void {
     let { dx, dy, dz } = spec;
-    this.setAxis(spec.ax, spec.ay, spec.az);
     const { sx, sy, sz, rows } = spec;
-    let px = spec.ox;
-    let py = spec.oy;
-    let pz = spec.oz;
+    let px = spec.ox + spec.rx;
+    let py = spec.oy + spec.ry;
+    let pz = spec.oz + spec.rz;
     const stride = spec.length / rows;
+    const curlCos = Math.cos(spec.curl / rows);
+    const curlSin = Math.sin(spec.curl / rows);
 
     for (let row = 0; row <= rows; row++) {
       const t = row / rows;
@@ -150,39 +147,18 @@ export class FoliageWriter {
       }
       if (row === rows) break;
       const base = this.vertex - 3;
-      this.indices.set([base, base + 3, base + 1, base + 1, base + 3, base + 4, base + 1, base + 4, base + 2, base + 2, base + 4, base + 5], this.cursor);
-      this.cursor += 12;
+      this.triangles([base, base + 3, base + 1, base + 1, base + 3, base + 4, base + 1, base + 4, base + 2, base + 2, base + 4, base + 5]);
       px += dx * stride;
       py += dy * stride;
       pz += dz * stride;
       dy -= (spec.droop / rows) * (0.6 + 0.8 * t);
-      const directionLength = Math.hypot(dx, dy, dz) || 1;
-      dx /= directionLength;
-      dy /= directionLength;
-      dz /= directionLength;
-    }
-  }
-
-  berry(spec: BerrySpec): void {
-    const first = this.vertex;
-    this.setAxis(0, -1, 0);
-    for (let ring = 0; ring <= BERRY_RINGS; ring++) {
-      const polar = (ring / BERRY_RINGS) * Math.PI;
-      for (let segment = 0; segment <= BERRY_SEGMENTS; segment++) {
-        const azimuth = (segment / BERRY_SEGMENTS) * Math.PI * 2;
-        const nx = Math.sin(polar) * Math.cos(azimuth);
-        const ny = Math.cos(polar);
-        const nz = Math.sin(polar) * Math.sin(azimuth);
-        this.push(spec, spec.cx + nx * spec.radius, spec.cy + ny * spec.radius, spec.cz + nz * spec.radius, nx, ny, nz, 0.5, ring / BERRY_RINGS, BERRY_SWAY);
-      }
-    }
-    const row = BERRY_SEGMENTS + 1;
-    for (let ring = 0; ring < BERRY_RINGS; ring++) {
-      for (let segment = 0; segment < BERRY_SEGMENTS; segment++) {
-        const a = first + ring * row + segment;
-        this.indices.set([a, a + 1, a + row, a + 1, a + row + 1, a + row], this.cursor);
-        this.cursor += 6;
-      }
+      const bentX = dx * curlCos - nx * curlSin;
+      const bentY = dy * curlCos - ny * curlSin;
+      const bentZ = dz * curlCos - nz * curlSin;
+      const directionLength = Math.hypot(bentX, bentY, bentZ) || 1;
+      dx = bentX / directionLength;
+      dy = bentY / directionLength;
+      dz = bentZ / directionLength;
     }
   }
 

@@ -31,7 +31,7 @@ export const speciesDraftSchema = z.object({
     leafShape: z.enum(LEAF_SHAPES),
     leafSize: z.number().describe('Leaf length, 0.03 to 2.4'),
     organShape: z.enum(ORGAN_SHAPES).describe('Shape drawn by the K symbol'),
-    organSize: z.number().describe('Flower or fruit size, 0.02 to 0.6'),
+    organSize: z.number().describe('Petal length or fruit diameter, 0.02 to 0.6'),
   }),
   palette: z.object({
     barkDark: z.string().describe('Hex colour such as #2a2019'),
@@ -39,7 +39,8 @@ export const speciesDraftSchema = z.object({
     leafDeep: z.string(),
     leafBright: z.string(),
     subsurface: z.string().describe('Colour of light transmitted through the leaves'),
-    organ: z.string().describe('Colour of flowers or fruit'),
+    organ: z.string().describe('Colour of petals or fruit'),
+    organCore: z.string().describe('Colour of the flower heart: disc, stamens or pistil'),
     glow: z.number().describe('Bioluminescent emission, 0 for ordinary plants up to 1'),
   }),
   mood: z.enum(LIGHTING_MOODS),

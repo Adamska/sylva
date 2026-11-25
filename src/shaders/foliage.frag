@@ -2,6 +2,7 @@ uniform vec3 uLeafDeep;
 uniform vec3 uLeafBright;
 uniform vec3 uSubsurface;
 uniform vec3 uOrganColor;
+uniform vec3 uOrganCore;
 uniform float uTranslucency;
 uniform float uGlow;
 uniform float uTime;
@@ -29,7 +30,10 @@ float transmittedLight(vec3 normal, vec3 viewDirection, vec3 lightDirection) {
 void main() {
   vec3 normal = normalize(vWorldNormal) * (gl_FrontFacing ? 1.0 : -1.0);
   vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
-  float leafness = 1.0 - vOrgan;
+  float organness = min(vOrgan, 1.0);
+  float stamen = step(1.5, vOrgan);
+  float heart = step(2.5, vOrgan);
+  float leafness = 1.0 - organness;
 
   float across = abs(vUv.x - 0.5) * 2.0;
   float midrib = 1.0 - smoothstep(0.0, 0.1, across);
@@ -44,8 +48,13 @@ void main() {
   vec3 leaf = mix(uLeafDeep, uLeafBright, tone);
   leaf = mix(leaf, uLeafBright, max(veins * 0.3, spring));
   leaf = mix(leaf, autumn, vTurn);
-  vec3 organ = uOrganColor * mix(0.62, 1.08, smoothstep(0.0, 0.7, vUv.y)) * mix(0.9, 1.1, vPhase);
-  vec3 albedo = mix(leaf, organ, vOrgan);
+  vec3 petal = uOrganColor * mix(0.62, 1.08, smoothstep(0.0, 0.7, vUv.y)) * mix(0.9, 1.1, vPhase);
+  vec3 filament = mix(petal, uOrganCore, smoothstep(0.5, 0.8, vUv.y));
+  float florets = 0.5 + 0.5 * sin(vUv.y * 60.0);
+  vec3 disc = uOrganCore * mix(0.62, 1.12, florets) * mix(0.7, 1.0, smoothstep(0.0, 0.3, vUv.y));
+  disc = mix(disc, mix(uLeafDeep, uLeafBright, 0.35), smoothstep(0.52, 0.6, vUv.y));
+  vec3 organ = mix(petal, mix(filament, disc, heart), stamen);
+  vec3 albedo = mix(leaf, organ, organness);
 
   float sun = getShadowMask();
   vec3 light = hemisphereLight(normal);
@@ -57,17 +66,17 @@ void main() {
   vec3 through = uKeyColor * transmittedLight(normal, viewDirection, uKeyDirection) * sun;
   through += uBackColor * transmittedLight(normal, viewDirection, uBackDirection);
   vec3 leafScatter = mix(leaf, mix(uSubsurface, autumn * 1.7, vTurn), 0.5);
-  vec3 scatterTint = mix(leafScatter, mix(organ, vec3(1.0), 0.3), vOrgan);
-  color += scatterTint * through * thinness * uTranslucency * mix(0.55, 1.0, vShade);
+  vec3 scatterTint = mix(leafScatter, mix(organ, vec3(1.0), 0.3), organness);
+  color += scatterTint * through * thinness * uTranslucency * mix(0.55, 1.0, vShade) * (1.0 - heart);
 
   vec3 halfVector = normalize(uKeyDirection + viewDirection);
   float gloss = pow(max(dot(normal, halfVector), 0.0), 42.0);
-  color += uKeyColor * gloss * mix(0.12, 0.3, vOrgan) * vShade * sun;
+  color += uKeyColor * gloss * mix(0.12, 0.3, organness) * vShade * sun;
   color += uRimColor * fresnelTerm(normal, viewDirection, 4.0) * 0.05;
 
   float breath = 0.5 + 0.5 * sin(uTime * 1.3 + vPhase * 6.28318530718);
   float core = 1.0 - smoothstep(0.0, 0.95, across);
-  vec3 lumen = mix(mix(uLeafBright, uSubsurface, smoothstep(0.35, 1.0, across) * 0.85), organ, vOrgan);
+  vec3 lumen = mix(mix(uLeafBright, uSubsurface, smoothstep(0.35, 1.0, across) * 0.85), organ, organness);
   color = mix(color, color * 0.3, uGlow);
   color += lumen * lumen * uGlow * (0.7 + 1.1 * breath) * (0.45 + 0.55 * core);
 

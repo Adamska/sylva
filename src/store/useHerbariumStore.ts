@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { Species } from '@/types/botany';
+import { speciesSchema, type Species } from '@/types/botany';
 
 export interface SavedSpecimen {
   id: string;
@@ -22,6 +22,15 @@ interface HerbariumState {
 const SAVED_LIMIT = 24;
 const PROMPT_LIMIT = 8;
 
+function migrate(persisted: unknown): Pick<HerbariumState, 'saved' | 'prompts'> {
+  const { saved = [], prompts = [] } = (persisted ?? {}) as Partial<Pick<HerbariumState, 'saved' | 'prompts'>>;
+  const upgraded = saved.flatMap((specimen) => {
+    const parsed = speciesSchema.safeParse(specimen.species);
+    return parsed.success ? [{ ...specimen, species: parsed.data }] : [];
+  });
+  return { saved: upgraded, prompts };
+}
+
 export const useHerbariumStore = create<HerbariumState>()(
   persist(
     (set) => ({
@@ -38,7 +47,8 @@ export const useHerbariumStore = create<HerbariumState>()(
     }),
     {
       name: 'sylva-herbarium',
-      version: 1,
+      version: 2,
+      migrate,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ saved: state.saved, prompts: state.prompts }),
       skipHydration: true,
