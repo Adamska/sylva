@@ -48,8 +48,9 @@ One key is enough and the model names are optional. Gemini is used when its key 
 
 ### Finding a plant
 
-- **Herbarium.** The shelf at the top of the inspector shows the five built-in species as rendered thumbnails. **Save** adds the current specimen to your own collection, which is kept in the browser.
-- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`, or name a flower: `pink tulips at dawn`, `giant sunflower at sunset`, `wild red poppies`. Descriptions can be written in English or French (`tulipe noire`, `vieux chêne tordu`), and near misses such as `crysanthemes` are still recognised. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history.
+- **Catalogue.** The first tile of the shelf, or `C`, opens 150 ready-made species: 51 trees, 6 shrubs, 79 flowers, 9 exotics and the five featured specimens. Each one is drawn as a thumbnail the first time it scrolls into view. Search by name in English or French, filter by group, and click a card to grow it at once.
+- **Herbarium.** The shelf at the top of the inspector shows the five featured species as rendered thumbnails. **Save** adds the current specimen to your own collection, which is kept in the browser.
+- **Species bar.** Describe a plant such as `crimson weeping cherry at midnight`, or name a flower: `pink tulips at dawn`, `giant sunflower at sunset`, `wild red poppies`. Descriptions can be written in English or French (`tulipe noire`, `vieux chêne tordu`), and near misses such as `crysanthemes` are still recognised. Focusing the empty field offers suggestions and your recent descriptions; the arrow keys step through history. While you type, matching catalogue species appear as chips. A description made only of words the catalogue understands (a name plus colour, size, mood and similar words) grows immediately and never reaches the language model; anything richer is sent to it with the matched species as a reference.
 - **Evolve.** Six rendered variants of the current specimen appear with a short description of how each differs. Pick one and it becomes the parent of the next six. This explores a species without reading a single rule.
 - **Refine.** The chips above the species bar nudge the current plant: more weeping, denser, taller, wilder and so on.
 
@@ -68,7 +69,8 @@ Every change to the species is undoable. **Link** copies a URL that carries the 
 | Key | Action |
 | --- | --- |
 | `Cmd/Ctrl + K` or `?` | Command palette |
-| `1` to `5` | Built-in species |
+| `1` to `5` | Featured species |
+| `C` | Browse the catalogue |
 | `V` | Evolve variants |
 | `R` | Reseed |
 | `S` | Save to herbarium |
@@ -76,7 +78,7 @@ Every change to the species is undoable. **Link** copies a URL that carries the 
 | `O` `G` `P` | Orbit, grove, presentation mode |
 | `E` | Export binary glTF |
 | `Cmd/Ctrl + Z`, `Shift + Cmd/Ctrl + Z` | Undo, redo |
-| `Esc` | Close the palette, tray or presentation |
+| `Esc` | Close the palette, catalogue, tray or presentation |
 
 Presentation mode hides the interface, orbits slowly and cycles through the species.
 
@@ -198,7 +200,7 @@ Light directions and colours come from the selected mood in `src/scene/moods.ts`
 { "species": { "name": "...", "latin": "...", "grammar": {}, "form": {}, "palette": {}, "mood": "abyssal", "seed": 0 }, "source": "procedural" }
 ```
 
-`source` is `gemini`, `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator reads English and French, folds accents and plurals, and tolerates small typos. It first looks for a name in two catalogues: about 160 flower names, from tulip and chrysanthème to foxglove and lily of the valley, each mapped to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours; and about 200 tree and shrub words covering broadleaves, conifers, fruit and flowering trees, palms, cacti and more, built on seventeen habits. A colour word repaints the petals of a named flower instead of its leaves, and a flower named together with a tree grows on that tree. It then reads colour, mood, stature and density words and perturbs branching angles from a hash of the text. When a language model is configured, the matched specimen is sent along as a reference to adapt.
+`source` is `catalog` when the description was fully understood without a model, otherwise `gemini`, `openai` or `procedural`, and an optional `notice` explains a fallback. Model output is requested as a structured object, then repaired and clamped before it is trusted: sentences are reduced to well-formed modules with balanced brackets, numbers are clamped to slider ranges, colours are checked, and the result must pass the same Zod schema the client uses. The procedural generator reads English and French, folds accents and plurals, and tolerates small typos. It first looks for a name in two catalogues: about 160 flower names, from tulip and chrysanthème to foxglove and lily of the valley, each mapped to a growth habit (clump, stalk, tuft, shrub, spire or spray), a flower shape and its usual colours; and about 200 tree and shrub words covering broadleaves, conifers, fruit and flowering trees, palms, cacti and more, built on seventeen habits. A colour word repaints the petals of a named flower instead of its leaves, and a flower named together with a tree grows on that tree. It then reads colour, mood, stature and density words and perturbs branching angles from a hash of the text. When a language model is configured, the matched specimen is sent along as a reference to adapt.
 
 ## Project layout
 
@@ -220,6 +222,7 @@ src/
     specimen.worker.ts Worker entry, with buildClient.ts as its caller
     mutation.ts        Variant breeding for Evolve
     grammarSynth.ts    Deterministic description-to-species generator
+    catalog.ts         Browsable index of every species, with search and suggestions
     flowerCatalog.ts   Flower names with their habit, shape and colours (herbHabits.ts)
     treeCatalog.ts     Tree and shrub names with their habit and overrides (treeHabits.ts)
     wordMatch.ts       Accent folding, plurals and typo-tolerant keyword matching
