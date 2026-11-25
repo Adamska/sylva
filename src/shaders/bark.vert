@@ -11,6 +11,7 @@ varying vec2 vUv;
 varying float vBranchFactor;
 varying float vBarkRoughness;
 varying float vRule;
+varying float vRadius;
 
 void main() {
   float reveal = smoothstep(0.0, 0.12, uGrowth * 1.12 - aBranchFactor);
@@ -26,6 +27,7 @@ void main() {
   vBranchFactor = aBranchFactor;
   vBarkRoughness = aBarkRoughness;
   vRule = aRule;
+  vRadius = radius;
 
   #if defined(USE_SHADOWMAP) && NUM_DIR_LIGHT_SHADOWS > 0
     vec4 shadowPoint = world + vec4(worldNormal * directionalLightShadows[0].shadowNormalBias, 0.0);
