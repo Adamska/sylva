@@ -12,6 +12,9 @@ export interface OrganSpec {
 }
 
 export interface BladeSpec extends OrganSpec {
+  ax: number;
+  ay: number;
+  az: number;
   dx: number;
   dy: number;
   dz: number;
@@ -36,6 +39,8 @@ export interface BerrySpec extends OrganSpec {
 
 const BERRY_SEGMENTS = 6;
 const BERRY_RINGS = 4;
+const BERRY_SWAY = 0.5;
+const HINGE_SHARE = 0.5;
 
 export const bladeVertexCount = (rows: number) => (rows + 1) * 3;
 export const bladeIndexCount = (rows: number) => rows * 12;
@@ -47,6 +52,7 @@ export class FoliageWriter {
   private readonly normals: Float32Array;
   private readonly uvs: Float32Array;
   private readonly anchors: Float32Array;
+  private readonly axes: Float32Array;
   private readonly sway: Float32Array;
   private readonly phase: Float32Array;
   private readonly branchFactor: Float32Array;
@@ -56,12 +62,16 @@ export class FoliageWriter {
   private readonly indices: Uint32Array;
   private vertex = 0;
   private cursor = 0;
+  private axisX = 0;
+  private axisY = 1;
+  private axisZ = 0;
 
   constructor(vertexTotal: number, indexTotal: number) {
     this.positions = new Float32Array(vertexTotal * 3);
     this.normals = new Float32Array(vertexTotal * 3);
     this.uvs = new Float32Array(vertexTotal * 2);
     this.anchors = new Float32Array(vertexTotal * 3);
+    this.axes = new Float32Array(vertexTotal * 3);
     this.sway = new Float32Array(vertexTotal);
     this.phase = new Float32Array(vertexTotal);
     this.branchFactor = new Float32Array(vertexTotal);
@@ -82,6 +92,9 @@ export class FoliageWriter {
     this.anchors[o] = spec.ox;
     this.anchors[o + 1] = spec.oy;
     this.anchors[o + 2] = spec.oz;
+    this.axes[o] = this.axisX;
+    this.axes[o + 1] = this.axisY;
+    this.axes[o + 2] = this.axisZ;
     this.uvs[this.vertex * 2] = u;
     this.uvs[this.vertex * 2 + 1] = v;
     this.sway[this.vertex] = sway;
@@ -93,8 +106,15 @@ export class FoliageWriter {
     this.vertex++;
   }
 
+  private setAxis(x: number, y: number, z: number): void {
+    this.axisX = x;
+    this.axisY = y;
+    this.axisZ = z;
+  }
+
   blade(spec: BladeSpec): void {
     let { dx, dy, dz } = spec;
+    this.setAxis(spec.ax, spec.ay, spec.az);
     const { sx, sy, sz, rows } = spec;
     let px = spec.ox;
     let py = spec.oy;
@@ -125,7 +145,7 @@ export class FoliageWriter {
           tz / normalLength,
           (column + 1) * 0.5,
           t,
-          t * t * spec.length * spec.flutter,
+          spec.flutter * (HINGE_SHARE + (1 - HINGE_SHARE) * t),
         );
       }
       if (row === rows) break;
@@ -145,6 +165,7 @@ export class FoliageWriter {
 
   berry(spec: BerrySpec): void {
     const first = this.vertex;
+    this.setAxis(0, -1, 0);
     for (let ring = 0; ring <= BERRY_RINGS; ring++) {
       const polar = (ring / BERRY_RINGS) * Math.PI;
       for (let segment = 0; segment <= BERRY_SEGMENTS; segment++) {
@@ -152,7 +173,7 @@ export class FoliageWriter {
         const nx = Math.sin(polar) * Math.cos(azimuth);
         const ny = Math.cos(polar);
         const nz = Math.sin(polar) * Math.sin(azimuth);
-        this.push(spec, spec.cx + nx * spec.radius, spec.cy + ny * spec.radius, spec.cz + nz * spec.radius, nx, ny, nz, 0.5, ring / BERRY_RINGS, 0);
+        this.push(spec, spec.cx + nx * spec.radius, spec.cy + ny * spec.radius, spec.cz + nz * spec.radius, nx, ny, nz, 0.5, ring / BERRY_RINGS, BERRY_SWAY);
       }
     }
     const row = BERRY_SEGMENTS + 1;
@@ -172,6 +193,7 @@ export class FoliageWriter {
         normal: { array: this.normals, itemSize: 3 },
         uv: { array: this.uvs, itemSize: 2 },
         aAnchor: { array: this.anchors, itemSize: 3 },
+        aAxis: { array: this.axes, itemSize: 3 },
         aSway: { array: this.sway, itemSize: 1 },
         aPhase: { array: this.phase, itemSize: 1 },
         aBranchFactor: { array: this.branchFactor, itemSize: 1 },

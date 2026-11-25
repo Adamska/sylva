@@ -155,7 +155,7 @@ Custom and generated grammars cannot stall the browser. Expansion stops before a
 Meshes are built in a web worker and transferred to the main thread, so the interface stays responsive while a grammar grows. The whole specimen is two draw calls, plus two more in the shadow pass.
 
 - **Bark** is one indexed geometry. Consecutive segments share rings, the reference frame is parallel-transported along each limb to avoid twist, side counts fall from twelve on the trunk to five on twigs (fewer at reduced detail levels), and tips are capped. Attributes: `position`, `normal`, `uv`, `aBranchFactor` (0 at the root to 1 at flexible tips), `aBarkRoughness` and `aRule`.
-- **Foliage** is one indexed geometry of curved, folded blades, five-petalled blossoms and berries. Attributes: `position`, `normal`, `uv`, `aAnchor` (attachment point), `aSway` (per-vertex flutter weight), `aPhase`, `aBranchFactor`, `aShade` (canopy depth), `aRule` and `aOrgan`.
+- **Foliage** is one indexed geometry of curved, folded blades, five-petalled blossoms and berries. Attributes: `position`, `normal`, `uv`, `aAnchor` (attachment point), `aAxis` (the hinge axis: the blade direction, or the flower axis for petals), `aSway` (flutter weight, rising from the base of a blade to its tip), `aPhase`, `aBranchFactor`, `aShade` (canopy depth), `aRule` and `aOrgan`.
 
 ### Shaders
 
@@ -163,10 +163,10 @@ All sources live in `src/shaders` and are imported as text.
 
 | File | Role |
 | --- | --- |
-| `wind.glsl` | Shared `windOffset(point, flex)`: a trunk lean weighted by height squared plus multi-octave limb eddies weighted by flexibility squared, phased by world position so neighbours sway out of step |
+| `wind.glsl` | Shared wind model. `windGust(site)` is a noise field of gust fronts and lulls that travels downwind through the canopy. `windOffset(point, flex)` keeps the trunk and scaffold limbs close to rigid and concentrates the bend, eddies and shiver on slender twigs by weighting them with flexibility cubed |
 | `bark.vert` | Applies wind and the growth reveal, which thickens limbs from the root outward |
 | `bark.frag` | Cylinder-mapped plate and grain noise, derivative bump mapping, cavity shading, warm rim light and pulsing sap veins for luminous species |
-| `foliage.vert` | Carries each blade with its branch by evaluating the same wind function at `aAnchor`, then adds flutter, unfurling, seasonal budding and the tumbling fall of shed leaves |
+| `foliage.vert` | Carries each blade with its branch by evaluating the same wind function at `aAnchor`, then turns it about its anchor: a twist around its own axis, a swing on a hinge and a lean that streamlines it downwind, all driven by the local gust so flurries cross the canopy. Also handles unfurling, seasonal budding and the tumbling fall of shed leaves |
 | `foliage.frag` | Vein and margin anatomy, autumn colour, petals and fruit, wrapped diffuse light and view-dependent transmission that brightens as the camera looks through a leaf toward a light |
 | `lighting.glsl` | Shared lights, the key light's shadow map so the canopy shades its own branches, and the rule highlight |
 | `depth.frag` | Shadow pass companion so shadows sway and shed with the plant |

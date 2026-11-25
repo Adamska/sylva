@@ -34,7 +34,7 @@ export const LEAF_PROFILES: Record<LeafShape, BladeProfile> = {
     droop: 0.4,
     fold: 0.42,
     rows: 7,
-    flutter: 0.12,
+    flutter: 0.04,
     outline: (t) => (0.72 + 0.28 * Math.sin(Math.PI * Math.min(1, t / 0.55))) * (1 - t ** 1.8) ** 0.9,
   },
   ovate: { aspect: 0.56, cluster: 2, splayDeg: 58, droop: 0.7, fold: 0.18, rows: 4, flutter: 0.9, outline: (t) => Math.sin(Math.PI * t ** 0.7) ** 0.75 },
@@ -182,6 +182,9 @@ export function buildFoliageMesh(skeleton: Skeleton, limbs: LimbMetrics, form: P
       spec.sx = sx / sideLength;
       spec.sy = sy / sideLength;
       spec.sz = sz / sideLength;
+      spec.ax = isOrgan ? hx : spec.dx;
+      spec.ay = isOrgan ? hy : spec.dy;
+      spec.az = isOrgan ? hz : spec.dz;
       spec.length = size * leafScales[node] * (isOrgan ? 0.85 + 0.3 * rng() : 0.78 + 0.44 * rng());
       spec.halfWidth = spec.length * profile.aspect * 0.5 * widen;
       spec.phase = isOrgan ? organPhase : rng();

@@ -5,8 +5,6 @@ attribute float aBranchFactor;
 attribute float aBarkRoughness;
 attribute float aRule;
 
-uniform float uTrunkRadius;
-
 varying vec3 vWorldPosition;
 varying vec3 vWorldNormal;
 varying vec2 vUv;
